@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>1 Milyonuncu Marka</title>
+<meta name="description" content="Saat başı yeni marka: logoyu 5 saniyede bul, indirim kuponunu kap.">
+<meta name="theme-color" content="#FFF8EE" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14121C" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=Inter:wght@400;500;600;700&family=Archivo+Black&family=Playfair+Display:ital,wght@1,700&family=Bebas+Neue&family=Pacifico&family=Righteous&family=Space+Mono:wght@700&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">İçeriğe geç</a>
+<header class="top">
+  <a class="brand" href="#/" aria-label="Ana sayfa">
+    <span class="brand-mark" aria-hidden="true">1M</span>
+    <span class="brand-name">1 Milyonuncu <b>Marka</b></span>
+  </a>
+  <nav class="nav" aria-label="Ana menü">
+    <a href="#/" data-nav="home">Kampanyalar</a>
+    <a href="#/kuponlarim" data-nav="coupons">Kuponlarım <span class="count" id="couponCount" hidden></span></a>
+    <a href="#/nasil" data-nav="how">Nasıl çalışır</a>
+    <a href="#/panel" data-nav="panel">Kupon takip</a>
+  </nav>
+  <div class="top-right">
+    <span class="clock" id="clock" title="Türkiye saati">--:--:--</span>
+    <button class="userbtn" id="userBtn" type="button">Giriş yap</button>
+  </div>
+</header>
+<div class="demo-banner" id="demoBanner" hidden>
+  Demo saati açık: site <b id="demoTime"></b> gibi davranıyor. <button type="button" id="demoReset">Gerçek saate dön</button>
+</div>
+<main id="main" tabindex="-1"></main>
+<footer class="foot">
+  <p>Prototip sürüm. Veriler bu tarayıcıda saklanır; gerçek yayında doğrulama, kupon ve süre kontrolü sunucuda yapılmalıdır.</p>
+</footer>
+<div id="modalRoot"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
