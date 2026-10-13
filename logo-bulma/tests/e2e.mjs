@@ -53,7 +53,7 @@ const order1 = await page.$$eval("#board button", b => b.map(x => x.getAttribute
 await page.click('#board button[aria-label="LC Waikiki"]');
 await page.waitForSelector("#wonCode");
 const code = await page.textContent("#wonCode");
-ok(/^LCW-[A-Z2-9]{6}$/.test(code), `kupon kodu üretildi (${code})`);
+ok(/^DEMO-LCW-[A-Z2-9]{5}$/.test(code), `kupon kodu üretildi (${code})`);
 await shot("3-kazandin");
 await page.click(".modal [data-copy]");
 await page.waitForTimeout(200);

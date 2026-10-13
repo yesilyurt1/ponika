@@ -154,7 +154,8 @@ const Api = {
 };
 function issueCoupon(c, key, u, t, test = false) {
   const prefix = c.brand.normalize("NFD").replace(/[^A-Za-z]/g, "").slice(0, 3).toUpperCase().padEnd(3, "X");
-  let code; do code = `${prefix}-${randStr(6)}`; while (db.coupons.some(x => x.code === code));
+  // Prototip kodları DEMO- ile başlar; gerçek bir marka kuponuyla karışmasın.
+  let code; do code = `DEMO-${prefix}-${randStr(5)}`; while (db.coupons.some(x => x.code === code));
   const cp = {code, key, campId:c.id, cat:c.cat, brand:c.brand, offer:c.offer, phone:u.phone, name:u.name,
     issuedAt:t.ms, expiresAt:t.ms + D.couponValidHours * 3600e3, usedAt:null, sale:null, commission:null, test};
   db.coupons.push(cp); return cp;
@@ -394,7 +395,7 @@ views.panel = () => {
       return `<tr class="${st === "active" ? "is-now" : ""}"><td class="nowrap">${hhmm(c.hour)}</td><td>${esc(CAT[c.cat].name)}</td><td><b>${esc(c.brand)}</b></td><td class="num nowrap">${c.durationMin} dk</td>
       <td class="num nowrap">${c.quota - remaining(c, t)} / ${c.quota}</td><td>${badge(st)}</td><td>${st === "active" ? `<button class="btn ghost sm" type="button" data-act="fill" data-id="${c.id}">Doldur</button>` : ""}</td></tr>`; }).join("")}
     </tbody></table></div></section>
-  <section class="section"><div class="sec-head"><h2>Kuponlar</h2><button class="btn ghost sm" type="button" data-act="csv" ${all.length ? "" : "disabled"}>CSV indir</button></div>
+  <section class="section"><div class="sec-head"><h2>Kuponlar</h2>${D.allowDownload === false ? "" : `<button class="btn ghost sm" type="button" data-act="csv" ${all.length ? "" : "disabled"}>CSV indir</button>`}</div>
     ${all.length ? `<div class="tablewrap"><table><thead><tr><th>Kod</th><th>Marka</th><th>Kullanıcı</th><th>Verildi</th><th>Durum</th><th class="num">Tık</th><th>Satış / komisyon</th></tr></thead><tbody>
     ${all.slice().reverse().map(cp => { const st = couponStatus(cp, t);
       return `<tr><td class="nowrap"><b>${esc(cp.code)}</b></td><td>${esc(cp.brand)}</td><td>${cp.test ? '<span class="muted">Test</span>' : esc(cp.name) + `<br><span class="small muted">${esc(fmtPhone(cp.phone))}</span>`}</td>
