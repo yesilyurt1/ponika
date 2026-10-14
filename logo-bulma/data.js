@@ -23,8 +23,8 @@ window.LB_DATA = {
     {slug:"cafe-hastane", name:"Cafe / Hastane vb.", icon:"☕"},
     {slug:"buyuk-firsat", name:"Büyük Fırsat", icon:"🎁"}
   ],
-  // Excel'de logo duvarında olup saat tablosunda olmayan markalar buraya eklenir.
-  extraBrands: {},
+  // Oyunda tek seferde gösterilen logo sayısı (hedef dahil). Kalanlar markalar.js kütüphanesinden rastgele gelir.
+  boardSize: 24,
   // Yalnızca alan adından emin olunan markalar; diğerleri panelden girilmeli.
   brandUrls: {
     "LC Waikiki":"https://www.lcw.com", "Defacto":"https://www.defacto.com.tr", "Koton":"https://www.koton.com",
@@ -103,6 +103,8 @@ window.LB_DATA = {
   {"id":"ev-tekstil-20","cat":"ev-tekstil","hour":20,"brand":"Evidea","offer":null,"findSec":5,"durationMin":15,"quota":50},
   {"id":"ev-tekstil-21","cat":"ev-tekstil","hour":21,"brand":"English Home","offer":null,"findSec":5,"durationMin":15,"quota":5},
   {"id":"ev-tekstil-22","cat":"ev-tekstil","hour":22,"brand":"Madame Coco","offer":null,"findSec":5,"durationMin":15,"quota":20},
-  {"id":"ev-tekstil-23","cat":"ev-tekstil","hour":23,"brand":"Karaca","offer":null,"findSec":5,"durationMin":15,"quota":50}
+  {"id":"ev-tekstil-23","cat":"ev-tekstil","hour":23,"brand":"Karaca","offer":null,"findSec":5,"durationMin":15,"quota":50},
+  // Demo: günün her saati açık, denemek için. Excel'deki 15:00 Civil kampanyasından ayrıdır.
+  {"id":"giyim-civil-demo","cat":"giyim","hour":0,"brand":"Civil","offer":"Demo kampanya: seçili ürünlerde %20 indirim","findSec":5,"durationMin":1440,"quota":1000,"demo":true}
   ]
 };

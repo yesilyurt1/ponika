@@ -31,7 +31,8 @@ ok(/\d\d:\d\d:\d\d/.test(await page.textContent("#clock")), "saat çalışıyor"
 await setDemo("00:02");
 ok(await page.isVisible("#demoBanner"), "demo saat bandı görünür");
 await page.goto(BASE + "#/");
-ok(await page.locator("section[aria-labelledby=liveH] .camp").count() === 3, "00:02'de 3 aktif kampanya");
+ok(await page.locator("section[aria-labelledby=liveH] .camp").count() === 4, "00:02'de 3 saatlik + Civil demo = 4 aktif kampanya");
+ok((await page.textContent("section[aria-labelledby=liveH] .camp")).includes("Civil"), "Civil demo kampanyası en başta");
 await shot("1-ana-sayfa");
 
 // giriş
@@ -118,14 +119,41 @@ ok((await page.textContent("#stage")).includes("başlıyor"), "gelecek kampanya 
 await page.click("#userBtn"); await page.fill("#lName", "Ayşe Yılmaz"); await page.fill("#lPhone", "05321112233"); await page.check("input[name=kvkk]");
 await page.click("form[data-form=login] button[type=submit]");
 
-// komisyon
+// marka kasası: doğrulama, sipariş, komisyon, kontroller
+await page.goto(BASE + "#/marka-kasasi/" + code);
+ok((await page.inputValue("#kBrand")) === "LC Waikiki" && (await page.inputValue("#kCode")) === code, "kasa kupondan marka ve kodu dolduruyor");
+await page.selectOption("#kBrand", "Koton"); await page.click("button[value=validate]");
+ok((await page.textContent(".kasa-out")).includes("Koton kasasında geçmez"), "başka markanın kasasında kod reddediliyor");
+await page.selectOption("#kBrand", "LC Waikiki"); await page.click("button[value=validate]");
+ok((await page.textContent(".kasa-out")).includes("Kod geçerli"), "kod doğrulanıyor");
+await page.fill("#kAmount", "1250"); await page.fill("#kOrder", "SIP-1001"); await page.click("button[value=order]");
+ok((await page.textContent(".kasa-out")).replace(/\s/g, " ").includes("37,50"), "1.250 ₺ siparişte %3 = 37,50 ₺ komisyon");
+await page.fill("#kCode", code); await page.fill("#kAmount", "1250"); await page.fill("#kOrder", "SIP-1001"); await page.click("button[value=order]");
+ok((await page.textContent(".kasa-out")).includes("ikinci kez sayılmadı"), "aynı sipariş tekrar bildirilirse iki kez sayılmıyor");
+await page.fill("#kCode", code); await page.fill("#kOrder", "SIP-1002"); await page.fill("#kAmount", "500"); await page.click("button[value=order]");
+ok((await page.textContent(".kasa-out")).includes("daha önce kullanılmış"), "kullanılmış kod yeni siparişte reddediliyor");
 await page.goto(BASE + "#/panel");
-await page.fill(`form[data-code="${code}"] input`, "1250");
-await page.click(`form[data-code="${code}"] button`);
-ok((await page.textContent("main")).replace(/\s/g, " ").includes("37,50"), "1.250 ₺ satışta %3 = 37,50 ₺ komisyon");
+ok((await page.textContent("main")).replace(/\s/g, " ").includes("37,50"), "komisyon panelde ve marka hakedişinde");
 await shot("5-panel");
 const dl = page.waitForEvent("download"); await page.click("[data-act=csv]");
 const file = await dl; ok(file.suggestedFilename().startsWith("kuponlar-"), "CSV indiriliyor");
+
+// Civil demo: her saatte açık, kazanılıyor; kasada doğrulanıp siparişi bildirilmezse kontrol listesine düşüyor
+await setDemo("15:40");
+await page.goto(BASE + "#/oyna/giyim-civil-demo"); await page.click("[data-act=start]");
+ok(await page.locator("#board button").count() === 24, "tahtada 24 logo (kütüphaneden rastgele)");
+await page.click('#board button[aria-label="Civil"]'); await page.waitForSelector("#wonCode");
+const civil = await page.textContent("#wonCode");
+ok(/^DEMO-CIV-/.test(civil), `Civil kuponu kazanıldı (${civil})`);
+await page.click(".modal a[href^='#/marka-kasasi']"); await page.waitForSelector("#kCode");
+await page.click("button[value=validate]");
+await page.goto(BASE + "#/panel");
+ok((await page.textContent(".stat.warn b")) === "1", "kasada doğrulanıp sipariş bildirilmeyen kod 'Kontrol edilecek'");
+await page.goto(BASE + "#/marka-kasasi/" + civil); await page.fill("#kAmount", "800"); await page.click("button[value=order]");
+await page.goto(BASE + "#/panel");
+ok(await page.locator(".stat.warn").count() === 0, "sipariş gelince kontrol uyarısı kalkıyor");
+await page.click(`button[data-act=refund][data-code="${civil}"]`);
+ok((await page.textContent("main")).includes("İade edildi") || (await page.locator(`tr:has-text("${civil}") s`).count()) === 1, "iade komisyonu geri alıyor");
 
 // 24 saat sonra kupon süresi dolar (yeni bir kupon kazanıp saati 25 sa ileri al)
 await setDemo("02:01");
@@ -142,7 +170,7 @@ ok(errors.length === 0, "konsol hatası yok" + (errors.length ? ": " + errors.jo
 const m = await browser.newContext({ viewport: { width: 375, height: 740 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
 const mp = await m.newPage();
 await mp.setViewportSize({ width: 375, height: 740 });
-for (const r of ["#/", "#/kategori/giyim", "#/kuponlarim", "#/nasil", "#/panel", "#/oyna/giyim-05"]) {
+for (const r of ["#/", "#/kategori/giyim", "#/kuponlarim", "#/nasil", "#/panel", "#/oyna/giyim-05", "#/marka-kasasi", "#/kategori/supermarket"]) {
   await mp.goto(BASE + r);
   const over = await mp.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   ok(over <= 0, `mobil ${r}: yatay taşma yok`);

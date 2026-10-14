@@ -55,7 +55,21 @@ function load() { try { return Object.assign(fresh(), JSON.parse(store(KEY)) || 
 function save() { store(KEY, JSON.stringify(db)); }
 
 const campById = id => CAMPS.find(c => c.id === id);
-const brandsOf = cat => [...new Set([...CAMPS.filter(c => c.cat === cat).map(c => c.brand), ...(D.extraBrands[cat] || [])])];
+const LIB = window.LB_MARKALAR || {}, LOGOS = window.LB_LOGOS || {};
+const libNames = cat => (LIB[cat] || []).map(x => x.split("|")[0]);
+// Kategorinin tüm markaları: Excel'deki kampanya markaları + marka kütüphanesi (büyük/küçük harf farkı tekrar sayılmaz).
+// "Büyük Fırsat" bir sektör olmadığı için tüm kategorilerin markalarını kullanır.
+function brandsOf(cat) {
+  const names = cat === "buyuk-firsat" ? Object.keys(LIB).flatMap(libNames) : [...CAMPS.filter(c => c.cat === cat).map(c => c.brand), ...libNames(cat)];
+  const seen = new Set();
+  return names.filter(n => { const k = n.toLocaleLowerCase("tr"); return !seen.has(k) && seen.add(k); });
+}
+// Oyun tahtası: hedef + kütüphaneden rastgele çeldiriciler (200 logo arasında 5 sn'de arama mümkün değil).
+function boardFor(c) {
+  const others = shuffle(brandsOf(c.cat).filter(b => b !== c.brand)).slice(0, D.boardSize - 1);
+  return shuffle([c.brand, ...others]);
+}
+const when = c => c.demo ? "Tüm gün" : hhmm(c.hour);
 const win = c => ({start:c.hour * 3600, end:c.hour * 3600 + c.durationMin * 60});
 const instKey = (c, t) => `${c.id}@${t.day}`;
 const winners = key => db.coupons.filter(x => x.key === key).length;
@@ -68,12 +82,15 @@ function status(c, t = clock()) {
 const remaining = (c, t = clock()) => Math.max(0, c.quota - winners(instKey(c, t)));
 const endsAtMs = (c, t = clock()) => t.ms + (win(c).end - t.sod) * 1000;
 function nextStart(t = clock()) {
-  const future = CAMPS.map(c => win(c).start).filter(s => s > t.sod);
-  const s = future.length ? Math.min(...future) : DAY + Math.min(...CAMPS.map(c => win(c).start));
+  const timed = CAMPS.filter(c => !c.demo), future = timed.map(c => win(c).start).filter(s => s > t.sod);
+  const s = future.length ? Math.min(...future) : DAY + Math.min(...timed.map(c => win(c).start));
   return {inSec:s - t.sod, hour:(s / 3600) % 24};
 }
 const user = () => db.session && db.users[db.session] || null;
-function couponStatus(cp, t = clock()) { return cp.usedAt ? "used" : t.ms > cp.expiresAt ? "expired" : "active"; }
+function couponStatus(cp, t = clock()) { return cp.refundedAt ? "refunded" : cp.usedAt ? "used" : t.ms > cp.expiresAt ? "expired" : "active"; }
+const COUPON_TXT = {active:"Kullanılabilir", used:"Kullanıldı", expired:"Süresi doldu", refunded:"İade edildi"};
+// Kasada doğrulanıp siparişi bildirilmeyen kupon: markanın satışı bildirmediği şüphesi, kontrol edilmeli.
+const needsCheck = cp => cp.validatedAt && !cp.usedAt && !cp.test;
 function brandUrl(cp) {
   const base = D.brandUrls[cp.brand]; if (!base) return null;
   const u = new URL(base);
@@ -109,7 +126,7 @@ const Api = {
     const st = status(c, t); if (st !== "active") return {error:st};
     const key = instKey(c, t);
     if (db.attempts[key]?.[u.phone]) return {error:"used"};
-    const tiles = shuffle(brandsOf(c.cat)).map(brand => ({token:randStr(10), brand}));
+    const tiles = boardFor(c).map(brand => ({token:randStr(10), brand}));
     const att = {startedAt:t.ms, deadline:t.ms + c.findSec * 1000, target:tiles.find(x => x.brand === c.brand).token, result:null};
     (db.attempts[key] = db.attempts[key] || {})[u.phone] = att; save();
     return {key, tiles, deadline:att.deadline, startedAt:att.startedAt};
@@ -135,13 +152,35 @@ const Api = {
   },
   myCoupons() { const u = user(); return u ? db.coupons.filter(x => x.phone === u.phone) : []; },
   click(cp) { db.clicks.push({code:cp.code, at:clock().ms}); save(); },
-  redeem(code, sale) {
-    const cp = db.coupons.find(x => x.code === code);
-    if (!cp || couponStatus(cp) !== "active") return {error:"status"};
-    if (!(sale > 0)) return {error:"sale"};
-    cp.usedAt = clock().ms; cp.sale = Math.round(sale * 100) / 100;
+  // Marka entegrasyonu: gerçekte markanın sitesi bu iki çağrıyı sunucumuza yapar (ENTEGRASYON.md).
+  // 1) Ödeme sayfasında kod girilince doğrulama  2) Sipariş tamamlanınca bildirim (tutar + sipariş no).
+  brandValidate(brand, rawCode) {
+    const code = String(rawCode).trim().toUpperCase(), cp = db.coupons.find(x => x.code === code);
+    if (!cp) return {ok:false, reason:"Kod bulunamadı."};
+    if (cp.brand !== brand) return {ok:false, reason:`Bu kod ${cp.brand} kuponu; ${brand} kasasında geçmez.`};
+    const st = couponStatus(cp);
+    if (st !== "active") return {ok:false, reason:{used:"Kod daha önce kullanılmış.", expired:"Kodun 24 saatlik süresi dolmuş.", refunded:"Kod iade edilen bir siparişte kullanılmış."}[st]};
+    cp.validatedAt = cp.validatedAt || clock().ms; save();
+    return {ok:true, coupon:cp};
+  },
+  brandOrder(brand, rawCode, orderNo, amount) {
+    const code = String(rawCode).trim().toUpperCase();
+    orderNo = String(orderNo).trim();
+    if (!orderNo) return {ok:false, reason:"Sipariş numarası gerekli."};
+    const same = db.coupons.find(x => x.brand === brand && x.orderNo === orderNo);
+    if (same) return same.code === code ? {ok:true, coupon:same, repeat:true} : {ok:false, reason:"Bu sipariş numarası başka bir kodla bildirilmiş."};
+    if (!(amount > 0)) return {ok:false, reason:"Sipariş tutarı 0'dan büyük olmalı."};
+    const v = this.brandValidate(brand, code); if (!v.ok) return v;
+    const cp = v.coupon;
+    cp.usedAt = clock().ms; cp.orderNo = orderNo; cp.sale = Math.round(amount * 100) / 100;
     cp.commission = Math.round(cp.sale * D.commissionRate * 100) / 100; save();
-    return {coupon:cp};
+    return {ok:true, coupon:cp};
+  },
+  brandRefund(code) {
+    const cp = db.coupons.find(x => x.code === code);
+    if (!cp || !cp.usedAt || cp.refundedAt) return {ok:false};
+    cp.refundedAt = clock().ms; cp.refundedCommission = cp.commission; cp.commission = 0; save();
+    return {ok:true, coupon:cp};
   },
   fillWithTestUsers(campId) {
     const c = campById(campId), t = clock();
@@ -166,7 +205,10 @@ const PALETTE = [["#111111","#FFFFFF"],["#E30613","#FFFFFF"],["#0B3D91","#FFFFFF
   ["#FFFFFF","#C8102E"],["#3B2A20","#F3E3C3"],["#6D28D9","#FFFFFF"],["#F28C28","#111111"],["#0E7490","#FFFFFF"],["#FFFFFF","#111111"]];
 // Uzun kelimeler bölünmesin diye en uzun kelimeye göre küçültülür; Türkçe harf yoksa
 // büyük/küçük harf dönüşümü İngilizce kurala göre yapılır (ADİDAS değil ADIDAS).
+// Orijinal logo dosyası varsa (logos/manifest.js) o gösterilir, yoksa yazı rozeti.
 function logo(brand, tag = "div", attrs = "") {
+  const src = LOGOS[brand];
+  if (src) return `<${tag} class="logo has-img" ${attrs}><img src="${esc(src)}" alt="${tag === "button" ? "" : esc(brand)}" loading="lazy" decoding="async" draggable="false"></${tag}>`;
   const h = hash(brand), [bg, fg] = PALETTE[h % PALETTE.length];
   const longest = Math.max(...brand.split(/\s+/).map(w => w.length));
   const s = Math.min(1, 7 / longest).toFixed(2);
@@ -186,7 +228,7 @@ function campCard(c, t) {
   else cta = `<a class="btn ghost block" href="#/oyna/${c.id}">Detay</a>`;
   return `<article class="card camp">
     <div class="camp-top">${logo(c.brand)}
-      <div class="camp-meta"><span class="cat">${CAT[c.cat].icon} ${esc(CAT[c.cat].name)} · ${hhmm(c.hour)}</span><h3>${esc(c.brand)}</h3>${badge(st)}</div>
+      <div class="camp-meta"><span class="cat">${CAT[c.cat].icon} ${esc(CAT[c.cat].name)} · ${when(c)}${c.demo ? " · demo" : ""}</span><h3>${esc(c.brand)}</h3>${badge(st)}</div>
     </div>
     <p class="offer" style="margin:0">${offerText(c)}</p>
     ${st === "active" ? `<div class="kv"><span>Kalan süre</span><b data-cd="${endsAtMs(c, t)}">${fmtDur(win(c).end - t.sod)}</b></div>` :
@@ -201,9 +243,9 @@ function campCard(c, t) {
 const views = {};
 views.home = () => {
   const t = clock();
-  const live = CAMPS.filter(c => status(c, t) === "active").sort((a, b) => win(a).end - win(b).end);
+  const live = CAMPS.filter(c => status(c, t) === "active").sort((a, b) => (b.demo ? 1 : 0) - (a.demo ? 1 : 0) || win(a).end - win(b).end);
   const nx = nextStart(t);
-  const upcoming = CAMPS.filter(c => c.hour === nx.hour);
+  const upcoming = CAMPS.filter(c => !c.demo && c.hour === nx.hour);
   return `
   <section class="hero">
     <span class="eyebrow">Her saat başı yeni marka</span>
@@ -226,7 +268,7 @@ views.home = () => {
       const list = CAMPS.filter(c => c.cat === cat.slug), isLive = list.some(c => status(c, t) === "active");
       return `<a class="cat-tile ${list.length ? "" : "soon"} ${isLive ? "has-live" : ""}" href="#/kategori/${cat.slug}">
         <span class="ic" aria-hidden="true">${cat.icon}</span><b>${esc(cat.name)}</b>
-        <span>${list.length ? `${brandsOf(cat.slug).length} marka · ${list.length} kampanya${isLive ? " · şu an aktif" : ""}` : "Yakında"}</span></a>`;
+        <span>${list.length ? `${brandsOf(cat.slug).length} marka · ${list.filter(c => !c.demo).length} kampanya${isLive ? " · şu an aktif" : ""}` : brandsOf(cat.slug).length ? `${brandsOf(cat.slug).length} marka · kampanya yakında` : "Yakında"}</span></a>`;
     }).join("")}</div>
   </section>`;
 };
@@ -238,14 +280,14 @@ views.category = slug => {
     <div class="empty"><b>Bu kategori yakında açılacak</b><span>Bu kategori için henüz marka ve kampanya tanımlanmadı.</span></div></section>`;
   const live = list.filter(c => status(c, t) === "active");
   return `<section class="section"><a href="#/" class="muted small">← Kampanyalar</a><h1>${cat.icon} ${esc(cat.name)}</h1>
-    <p class="muted" style="margin:0">${brandsOf(slug).length} marka, günde ${list.length} kampanya, toplam ${list.reduce((s, c) => s + c.quota, 0)} kupon.</p></section>
+    <p class="muted" style="margin:0">${brandsOf(slug).length} marka, günde ${list.filter(c => !c.demo).length} kampanya, toplam ${list.filter(c => !c.demo).reduce((s, c) => s + c.quota, 0)} kupon.</p></section>
   ${live.length ? `<section class="section"><h2><span class="live-dot" aria-hidden="true"></span>Şu an aktif</h2><div class="grid-cards">${live.map(c => campCard(c, t)).join("")}</div></section>` : ""}
-  <section class="section"><div class="sec-head"><h2>Kategorideki markalar</h2><span class="muted small">Oyunda bu logolar karışık dizilir</span></div>
+  <section class="section"><div class="sec-head"><h2>Kategorideki markalar</h2><span class="muted small">Her oyunda bunlardan ${D.boardSize} tanesi karışık gelir</span></div>
     <div class="logo-wall">${brandsOf(slug).map(b => logo(b)).join("")}</div></section>
   <section class="section"><h2>Bugünün programı</h2>
     <div class="tablewrap"><table><thead><tr><th class="nowrap">Saat</th><th>Marka / kampanya</th><th class="nowrap">Kontenjan</th><th>Durum</th></tr></thead><tbody>
     ${list.map(c => { const st = status(c, t);
-      return `<tr class="${st === "active" ? "is-now" : st === "upcoming" ? "" : "is-past"}"><td class="nowrap">${hhmm(c.hour)}–${hhmm(c.hour, c.durationMin)}<br><span class="small muted">${c.durationMin} dk</span></td>
+      return `<tr class="${st === "active" ? "is-now" : st === "upcoming" ? "" : "is-past"}"><td class="nowrap">${c.demo ? "Tüm gün<br><span class=\"small muted\">demo</span>" : `${hhmm(c.hour)}–${hhmm(c.hour, c.durationMin)}<br><span class="small muted">${c.durationMin} dk</span>`}</td>
       <td><a href="#/oyna/${c.id}"><b>${esc(c.brand)}</b></a><br><span class="small ${c.offer ? "" : "muted"}">${c.offer ? esc(c.offer) : "Sürpriz indirim"}</span></td>
       <td class="nowrap">${remaining(c, t)} / ${c.quota}</td><td>${badge(st)}</td></tr>`; }).join("")}
     </tbody></table></div></section>`;
@@ -256,7 +298,7 @@ views.play = id => {
   const c = campById(id); if (!c) return views.notFound();
   const t = clock(), st = status(c, t), att = Api.attemptOf(c, t), u = user();
   const head = `<a href="#/kategori/${c.cat}" class="muted small">← ${esc(CAT[c.cat].name)}</a>
-    <div class="target">${logo(c.brand)}<div><span class="eyebrow">${hhmm(c.hour)} kampanyası · hedef logo</span><h2>${esc(c.brand)}</h2><div class="offer">${offerText(c)}</div></div></div>`;
+    <div class="target">${logo(c.brand)}<div><span class="eyebrow">${c.demo ? "Demo kampanya" : hhmm(c.hour) + " kampanyası"} · hedef logo</span><h2>${esc(c.brand)}</h2><div class="offer">${offerText(c)}</div></div></div>`;
   let body;
   if (att && att.result === "won") {
     const cp = Api.myCoupons().find(x => x.key === instKey(c, t));
@@ -271,7 +313,7 @@ views.play = id => {
     body = `<div class="card"><h3>Katılmak için giriş yap</h3><p class="muted">Kuponlar hesabına tanımlanır, bu yüzden oyuna başlamadan önce giriş yapman gerekiyor.</p><button class="btn primary" type="button" data-act="login">Giriş yap</button></div>`;
   } else {
     body = `<div class="card section"><h3>Hazır mısın?</h3>
-      <ul class="rules"><li><b>Başla</b>'ya bastığında ${brandsOf(c.cat).length} logo karışık dizilir.</li><li><b>${esc(c.brand)}</b> logosuna <b>${c.findSec} saniye</b> içinde dokun.</li>
+      <ul class="rules"><li><b>Başla</b>'ya bastığında ${Math.min(D.boardSize, brandsOf(c.cat).length)} logo karışık dizilir.</li><li><b>${esc(c.brand)}</b> logosuna <b>${c.findSec} saniye</b> içinde dokun.</li>
       <li>Tek hakkın var: yanlış logo ya da süre dolması hakkını bitirir.</li><li>Kalan kontenjan: <b>${remaining(c, t)} / ${c.quota}</b> · kampanyanın bitmesine <b data-cd="${endsAtMs(c, t)}">${fmtDur(win(c).end - t.sod)}</b></li></ul>
       <button class="btn primary block" type="button" data-act="start" data-id="${c.id}">Başla</button></div>`;
   }
@@ -328,26 +370,47 @@ function wonModal(cp, ms) {
     <div class="code-row"><span class="code" id="wonCode">${esc(cp.code)}</span><button class="btn dark" type="button" data-copy="${esc(cp.code)}">Kopyala</button></div>
     <p class="small muted" style="margin:0">Son kullanma: <b>${fmtDateTime(cp.expiresAt)}</b> (24 saat). Kupon Kuponlarım sayfasına kaydedildi.</p>
     <div class="actions">${brandUrl(cp) ? `<a class="btn primary" href="${esc(brandUrl(cp))}" target="_blank" rel="noopener" data-utm="${esc(cp.code)}">${esc(cp.brand)} sitesine git</a>` : ""}
+    <a class="btn ${brandUrl(cp) ? "ghost" : "primary"}" href="#/marka-kasasi/${esc(cp.code)}" data-close>Marka kasasında kullan (demo)</a>
     <a class="btn ghost" href="#/kuponlarim" data-close>Kuponlarım</a></div></div>`, render);
 }
 
+const COUPON_CLS = {active:"st-active", used:"st-won", expired:"st-ended", refunded:"st-ended"};
 views.coupons = () => {
   if (!user()) return `<section class="section"><h1>Kuponlarım</h1><div class="empty"><b>Kuponlarını görmek için giriş yap</b><button class="btn primary" type="button" data-act="login">Giriş yap</button></div></section>`;
-  const t = clock(), order = {active:0, used:1, expired:2};
+  const t = clock(), order = {active:0, used:1, refunded:2, expired:3};
   const list = Api.myCoupons().slice().sort((a, b) => order[couponStatus(a, t)] - order[couponStatus(b, t)] || b.issuedAt - a.issuedAt);
   return `<section class="section"><h1>Kuponlarım</h1><p class="muted" style="margin:0">Kupon kodunu kopyala, markanın sitesinde kampanyalı ürünü sepete ekleyip kodu gir. Kuponlar 24 saat geçerlidir.</p></section>
   ${list.length ? `<div class="grid-cards">${list.map(cp => { const st = couponStatus(cp, t), url = brandUrl(cp);
     return `<article class="card coupon ${st === "active" ? "" : "inactive"}">
       <div class="camp-top">${logo(cp.brand)}<div class="camp-meta"><span class="cat">${esc(CAT[cp.cat].name)} · ${fmtDateTime(cp.issuedAt)}</span><h3>${esc(cp.brand)}</h3>
-      <span class="status ${st === "active" ? "st-active" : st === "used" ? "st-won" : "st-ended"}">${{active:"Kullanılabilir", used:"Kullanıldı", expired:"Süresi doldu"}[st]}</span></div></div>
+      <span class="status ${COUPON_CLS[st]}">${COUPON_TXT[st]}</span></div></div>
       <p class="offer" style="margin:0">${cp.offer ? esc(cp.offer) : '<span class="tbd">Kampanya ürününde geçerli</span>'}</p>
       <div class="code-row"><span class="code">${esc(cp.code)}</span><button class="btn dark sm" type="button" data-copy="${esc(cp.code)}" ${st === "active" ? "" : "disabled"}>Kopyala</button></div>
       ${st === "active" ? `<div class="kv"><span>Kalan süre</span><b data-cd="${cp.expiresAt}">${fmtDur((cp.expiresAt - t.ms) / 1000)}</b></div>` :
-        st === "used" ? `<div class="kv"><span>Kullanım</span><b>${fmtDateTime(cp.usedAt)}</b></div>` : `<div class="kv"><span>Son kullanma</span><b>${fmtDateTime(cp.expiresAt)}</b></div>`}
-      ${st !== "active" ? "" : url ? `<a class="btn primary block" href="${esc(url)}" target="_blank" rel="noopener" data-utm="${esc(cp.code)}">${esc(cp.brand)} sitesine git</a>` :
-        `<span class="btn ghost block" aria-disabled="true">Marka bağlantısı henüz eklenmedi</span>`}
+        st === "expired" ? `<div class="kv"><span>Son kullanma</span><b>${fmtDateTime(cp.expiresAt)}</b></div>` : `<div class="kv"><span>Kullanım</span><b>${fmtDateTime(cp.usedAt)}</b></div>`}
+      ${st !== "active" ? "" : (url ? `<a class="btn primary block" href="${esc(url)}" target="_blank" rel="noopener" data-utm="${esc(cp.code)}">${esc(cp.brand)} sitesine git</a>` : "") +
+        `<a class="btn ${url ? "ghost" : "primary"} block" href="#/marka-kasasi/${esc(cp.code)}">Marka kasasında kullan (demo)</a>`}
     </article>`; }).join("")}</div>` :
     `<div class="empty"><b>Henüz kuponun yok</b><span>Aktif bir kampanyada logoyu 5 saniyede bul, kuponun burada görünsün.</span><a class="btn primary" href="#/">Aktif kampanyalar</a></div>`}`;
+};
+
+// Marka kasası: markanın ödeme sayfasının simülasyonu. Gerçekte bu adımlar markanın sitesinden API ile gelir.
+let kasaMsg = null;
+views.kasa = code => {
+  const cp = code ? db.coupons.find(x => x.code === code) : null;
+  const brands = [...new Set(CAMPS.map(c => c.brand))].sort((a, b) => a.localeCompare(b, "tr"));
+  const sel = cp?.brand || kasaMsg?.brand || brands[0];
+  const msg = kasaMsg ? `<div class="kasa-out ${kasaMsg.ok ? "ok" : "bad"}" role="status">${kasaMsg.html}</div>` : "";
+  return `<section class="section"><h1>Marka kasası <span class="pill-demo">demo</span></h1>
+    <p class="muted" style="margin:0;max-width:66ch">Bu ekran markanın sitesindeki ödeme sayfasını taklit eder. Canlıda bu iki adımı markanın sitesi bizim sunucumuza kendisi bildirir: kod girilince <b>doğrulama</b>, ödeme bitince <b>sipariş bildirimi</b> (sipariş numarası ve tutar). %${D.commissionRate * 100} komisyon bu bildirimden hesaplanır ve Kupon takip ekranına düşer.</p></section>
+  <form class="card section kasa" data-form="kasa" novalidate>
+    <div class="field"><label for="kBrand">Mağaza (marka)</label><select id="kBrand" name="brand">${brands.map(b => `<option ${b === sel ? "selected" : ""}>${esc(b)}</option>`).join("")}</select></div>
+    <div class="field"><label for="kCode">Kupon kodu</label><input id="kCode" name="code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="DEMO-CIV-XXXXX" value="${esc(cp?.code || kasaMsg?.code || "")}"></div>
+    <div class="frow"><div class="field"><label for="kAmount">Sepet tutarı (₺)</label><input id="kAmount" name="amount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="1000"></div>
+      <div class="field"><label for="kOrder">Sipariş no</label><input id="kOrder" name="order" value="SIP-${randStr(6, "0123456789")}"></div></div>
+    <div class="toolbar"><button class="btn ghost" type="submit" name="step" value="validate">Kodu doğrula</button><button class="btn primary" type="submit" name="step" value="order">Siparişi tamamla</button></div>
+    ${msg}
+  </form>`;
 };
 
 views.how = () => `<section class="prose">
@@ -357,10 +420,10 @@ views.how = () => `<section class="prose">
   <li>Kampanya belirlenen süre boyunca (10–30 dk) açık kalır.</li>
   <li>Her kampanyanın bir kişi kontenjanı vardır (5–50 kişi). Kontenjan dolduğunda ya da süre bittiğinde kampanya ana sayfadan otomatik kalkar ve kategoride de kapanır.</li></ul>
   <h2>Oyun</h2>
-  <ol><li>Giriş yap ve aktif bir kampanya seç.</li><li><b>Başla</b>'ya bastığında kategorideki tüm marka logoları karışık sırayla ekrana gelir.</li>
+  <ol><li>Giriş yap ve aktif bir kampanya seç.</li><li><b>Başla</b>'ya bastığında kategorinin marka logolarından ${D.boardSize} tanesi karışık sırayla ekrana gelir; hedef logo her zaman aralarındadır.</li>
   <li>Hedef markanın logosuna <b>5 saniye</b> içinde dokun.</li><li>Her kampanyada tek deneme hakkın var. Yanlış logo veya süre dolması hakkını bitirir.</li></ol>
   <h2>Kupon</h2>
-  <ul><li>Kazandığında ekranda kişiye özel kupon kodu çıkar; tek dokunuşla kopyalayabilirsin.</li>
+  <ul><li>Kazandığında ekranda kişiye özel kupon kodu çıkar; tek dokunuşla kopyalayabilirsin.</li><li>Kodu markanın sitesinde ödeme sayfasına girersin; marka kodu bizden doğrular ve indirimi uygular.</li>
   <li>Kupon <b>Kuponlarım</b> sayfasına da kaydedilir.</li><li>Kuponu kazandıktan sonra <b>24 saat</b> içinde markanın sitesinde, kampanyalı üründe kullanmalısın.</li></ul>
   <h2>Sık sorulanlar</h2>
   <p><b>Neden tek hak var?</b> Sırayla tüm logolara dokunarak kazanmayı engellemek için.</p>
@@ -370,19 +433,37 @@ views.how = () => `<section class="prose">
 views.panel = () => {
   const t = clock(), all = db.coupons;
   const sel = store("lb:panelCat") || "all";
-  const real = all.filter(x => !x.test), used = real.filter(x => x.usedAt);
+  const real = all.filter(x => !x.test), used = real.filter(x => x.usedAt && !x.refundedAt), check = real.filter(needsCheck);
   const sales = used.reduce((s, x) => s + x.sale, 0), comm = used.reduce((s, x) => s + x.commission, 0);
   const clicksOf = code => db.clicks.filter(k => k.code === code).length;
   const camps = CAMPS.filter(c => sel === "all" || c.cat === sel);
-  return `<section class="section"><h1>Kupon takip</h1><p class="muted" style="margin:0">Platform yönetimi için prototip panel: kampanya doluluk, kupon kullanımı, UTM tıklamaları ve %${D.commissionRate * 100} komisyon.</p></section>
+  const byBrand = {};
+  for (const cp of real) {
+    const b = byBrand[cp.brand] = byBrand[cp.brand] || {n:0, checked:0, orders:0, sale:0, comm:0};
+    b.n++; if (cp.validatedAt) b.checked++;
+    if (cp.usedAt && !cp.refundedAt) { b.orders++; b.sale += cp.sale; b.comm += cp.commission; }
+  }
+  const stCell = cp => { const st = couponStatus(cp, t);
+    return needsCheck(cp) && st === "active" ? `<span class="status st-lost">Kasada doğrulandı, sipariş yok</span>` :
+      needsCheck(cp) ? `<span class="status st-lost">Doğrulandı, sipariş bildirilmedi</span>` : esc(COUPON_TXT[st]); };
+  return `<section class="section"><h1>Kupon takip</h1><p class="muted" style="margin:0">Kampanya doluluğu, kupon kullanımı, markaların bildirdiği siparişler ve %${D.commissionRate * 100} komisyon.</p></section>
   <div class="stats">
     <div class="card stat"><span class="eyebrow">Verilen kupon</span><b>${real.length}</b></div>
-    <div class="card stat"><span class="eyebrow">Kullanılan</span><b>${used.length}</b></div>
+    <div class="card stat"><span class="eyebrow">Siparişe dönen</span><b>${used.length}</b></div>
     <div class="card stat"><span class="eyebrow">Dönüşüm</span><b>${real.length ? Math.round(used.length / real.length * 100) : 0}%</b></div>
-    <div class="card stat"><span class="eyebrow">UTM tıklama</span><b>${db.clicks.length}</b></div>
+    <div class="card stat ${check.length ? "warn" : ""}"><span class="eyebrow">Kontrol edilecek</span><b>${check.length}</b></div>
     <div class="card stat"><span class="eyebrow">Satış tutarı</span><b>${tl(sales)}</b></div>
     <div class="card stat"><span class="eyebrow">Komisyon (%${D.commissionRate * 100})</span><b>${tl(comm)}</b></div>
   </div>
+  <section class="card section"><h2>Komisyonu nasıl kontrol ediyorsun?</h2>
+    <ul class="rules small"><li>Her kazanana <b>kişiye özel, tek kullanımlık</b> kod verilir; markada kullanılan her kod tek bir kazanana ve tek bir siparişe bağlanır.</li>
+    <li>Markanın sitesi kodu ödeme sayfasında <b>bizim sunucumuza sorarak doğrular</b>; kod başka yerden doğrulanamaz. Böylece hangi kodun kasaya geldiğini biz de görürüz.</li>
+    <li>Sipariş tamamlanınca marka <b>sipariş no + tutar</b> bildirir, komisyon buradan hesaplanır. İade olursa komisyon geri alınır.</li>
+    <li><b>Kontrol edilecek</b>: Kasada doğrulanan ama siparişi bildirilmeyen kodlar. Ay sonu mutabakatında markaya sorulur; sözleşmedeki denetim maddesine dayanak olur.</li></ul></section>
+  <section class="section"><h2>Marka hakedişleri</h2>
+    ${Object.keys(byBrand).length ? `<div class="tablewrap"><table><thead><tr><th>Marka</th><th class="num">Kupon</th><th class="num">Kasada doğrulanan</th><th class="num">Sipariş</th><th class="num">Satış</th><th class="num">Komisyon</th></tr></thead><tbody>
+    ${Object.entries(byBrand).sort((a, b) => b[1].comm - a[1].comm).map(([k, b]) => `<tr><td><b>${esc(k)}</b></td><td class="num">${b.n}</td><td class="num">${b.checked}</td><td class="num">${b.orders}</td><td class="num nowrap">${tl(b.sale)}</td><td class="num nowrap"><b>${tl(b.comm)}</b></td></tr>`).join("")}
+    </tbody></table></div>` : `<div class="empty"><b>Henüz kupon verilmedi</b></div>`}</section>
   <section class="card section"><h2>Test araçları</h2>
     <form class="toolbar" data-form="demo"><div class="field"><label for="demoAt">Demo saati (Türkiye)</label><input id="demoAt" type="time" required value="${hhmm(t.h, t.mi)}"></div>
       <button class="btn dark" type="submit">Saati uygula</button><button class="btn ghost" type="button" data-act="realtime" ${demoOffset ? "" : "disabled"}>Gerçek saat</button>
@@ -392,16 +473,16 @@ views.panel = () => {
     <div class="field" style="min-width:180px"><label for="catSel">Kategori</label><select id="catSel" data-act="cat">${[["all", "Tümü"], ...D.categories.filter(c => CAMPS.some(x => x.cat === c.slug)).map(c => [c.slug, c.name])].map(([v, n]) => `<option value="${v}" ${v === sel ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></div></div>
     <div class="tablewrap"><table><thead><tr><th>Saat</th><th>Kategori</th><th>Marka</th><th class="num">Süre</th><th class="num">Kazanan</th><th>Durum</th><th></th></tr></thead><tbody>
     ${camps.map(c => { const st = status(c, t);
-      return `<tr class="${st === "active" ? "is-now" : ""}"><td class="nowrap">${hhmm(c.hour)}</td><td>${esc(CAT[c.cat].name)}</td><td><b>${esc(c.brand)}</b></td><td class="num nowrap">${c.durationMin} dk</td>
-      <td class="num nowrap">${c.quota - remaining(c, t)} / ${c.quota}</td><td>${badge(st)}</td><td>${st === "active" ? `<button class="btn ghost sm" type="button" data-act="fill" data-id="${c.id}">Doldur</button>` : ""}</td></tr>`; }).join("")}
+      return `<tr class="${st === "active" ? "is-now" : ""}"><td class="nowrap">${when(c)}</td><td>${esc(CAT[c.cat].name)}</td><td><b>${esc(c.brand)}</b></td><td class="num nowrap">${c.demo ? "–" : c.durationMin + " dk"}</td>
+      <td class="num nowrap">${c.quota - remaining(c, t)} / ${c.quota}</td><td>${badge(st)}</td><td>${st === "active" && !c.demo ? `<button class="btn ghost sm" type="button" data-act="fill" data-id="${c.id}">Doldur</button>` : ""}</td></tr>`; }).join("")}
     </tbody></table></div></section>
   <section class="section"><div class="sec-head"><h2>Kuponlar</h2>${D.allowDownload === false ? "" : `<button class="btn ghost sm" type="button" data-act="csv" ${all.length ? "" : "disabled"}>CSV indir</button>`}</div>
-    ${all.length ? `<div class="tablewrap"><table><thead><tr><th>Kod</th><th>Marka</th><th>Kullanıcı</th><th>Verildi</th><th>Durum</th><th class="num">Tık</th><th>Satış / komisyon</th></tr></thead><tbody>
-    ${all.slice().reverse().map(cp => { const st = couponStatus(cp, t);
-      return `<tr><td class="nowrap"><b>${esc(cp.code)}</b></td><td>${esc(cp.brand)}</td><td>${cp.test ? '<span class="muted">Test</span>' : esc(cp.name) + `<br><span class="small muted">${esc(fmtPhone(cp.phone))}</span>`}</td>
-      <td class="nowrap">${fmtDateTime(cp.issuedAt)}</td><td>${{active:"Aktif", used:"Kullanıldı", expired:"Süresi doldu"}[st]}</td><td class="num">${clicksOf(cp.code)}</td>
-      <td class="nowrap">${st === "used" ? `${tl(cp.sale)} / <b>${tl(cp.commission)}</b>` : st === "active" && !cp.test ?
-        `<form data-form="redeem" data-code="${esc(cp.code)}" style="display:flex;gap:6px"><input class="salein" name="sale" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Satış ₺" aria-label="${esc(cp.code)} satış tutarı" required><button class="btn ghost sm" type="submit">Kullanıldı</button></form>` : "–"}</td></tr>`; }).join("")}
+    ${all.length ? `<div class="tablewrap"><table><thead><tr><th>Kod</th><th>Marka</th><th>Kullanıcı</th><th>Verildi</th><th>Durum</th><th class="num">Tık</th><th>Sipariş</th><th class="num">Satış</th><th class="num">Komisyon</th><th></th></tr></thead><tbody>
+    ${all.slice().reverse().map(cp => `<tr class="${needsCheck(cp) ? "is-flag" : ""}"><td class="nowrap"><b>${esc(cp.code)}</b></td><td>${esc(cp.brand)}</td><td>${cp.test ? '<span class="muted">Test</span>' : esc(cp.name) + `<br><span class="small muted">${esc(fmtPhone(cp.phone))}</span>`}</td>
+      <td class="nowrap">${fmtDateTime(cp.issuedAt)}</td><td>${stCell(cp)}</td><td class="num">${clicksOf(cp.code)}</td>
+      <td class="nowrap">${cp.orderNo ? esc(cp.orderNo) : "–"}</td><td class="num nowrap">${cp.sale ? tl(cp.sale) : "–"}</td>
+      <td class="num nowrap">${cp.refundedAt ? `<s>${tl(cp.refundedCommission)}</s>` : cp.usedAt ? `<b>${tl(cp.commission)}</b>` : "–"}</td>
+      <td>${cp.usedAt && !cp.refundedAt ? `<button class="btn ghost sm" type="button" data-act="refund" data-code="${esc(cp.code)}">İade</button>` : ""}</td></tr>`).join("")}
     </tbody></table></div>` : `<div class="empty"><b>Henüz kupon verilmedi</b></div>`}</section>`;
 };
 
@@ -445,9 +526,9 @@ function accountModal() {
     <div class="actions"><a class="btn dark" href="#/kuponlarim" data-close>Kuponlarım</a><button class="btn ghost" type="button" data-act="logout">Çıkış yap</button></div></div>`, render);
 }
 function downloadCsv() {
-  const head = ["kod", "kampanya", "kategori", "marka", "ad", "telefon", "verildi", "son_kullanma", "durum", "kullanildi", "satis_tl", "komisyon_tl", "utm_tiklama", "test"];
+  const head = ["kod", "kampanya", "kategori", "marka", "ad", "telefon", "verildi", "son_kullanma", "durum", "kasada_dogrulandi", "siparis_no", "kullanildi", "satis_tl", "komisyon_tl", "iade", "utm_tiklama", "test"];
   const iso = ms => ms ? new Date(ms).toISOString() : "";
-  const rows = db.coupons.map(cp => [cp.code, cp.campId, cp.cat, cp.brand, cp.name, cp.phone, iso(cp.issuedAt), iso(cp.expiresAt), couponStatus(cp), iso(cp.usedAt), cp.sale ?? "", cp.commission ?? "", db.clicks.filter(k => k.code === cp.code).length, cp.test ? 1 : 0]);
+  const rows = db.coupons.map(cp => [cp.code, cp.campId, cp.cat, cp.brand, cp.name, cp.phone, iso(cp.issuedAt), iso(cp.expiresAt), couponStatus(cp), iso(cp.validatedAt), cp.orderNo ?? "", iso(cp.usedAt), cp.sale ?? "", cp.commission ?? "", iso(cp.refundedAt), db.clicks.filter(k => k.code === cp.code).length, cp.test ? 1 : 0]);
   const csv = "﻿" + [head, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\r\n");
   const a = Object.assign(document.createElement("a"), {href:URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"})), download:`kuponlar-${clock().day}.csv`});
   document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
@@ -457,7 +538,7 @@ function downloadCsv() {
 let route = {name:"home", arg:null};
 function parseRoute() {
   const parts = location.hash.replace(/^#\/?/, "").split("/").filter(Boolean).map(decodeURIComponent);
-  const map = {"":"home", kategori:"category", oyna:"play", kuponlarim:"coupons", nasil:"how", panel:"panel"};
+  const map = {"":"home", kategori:"category", oyna:"play", kuponlarim:"coupons", nasil:"how", panel:"panel", "marka-kasasi":"kasa"};
   const name = map[parts[0] || ""];
   return name ? {name, arg:parts[1] || null} : {name:"notFound", arg:null};
 }
@@ -472,9 +553,9 @@ function render(focusMain = false) {
   const main = $("#main");
   main.innerHTML = views[route.name](route.arg);
   lastSig = signature();
-  const navName = {home:"home", category:"home", play:"home", coupons:"coupons", how:"how", panel:"panel"}[route.name];
+  const navName = {home:"home", category:"home", play:"home", coupons:"coupons", how:"how", panel:"panel", kasa:"kasa"}[route.name];
   document.querySelectorAll("[data-nav]").forEach(a => a.dataset.nav === navName ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
-  const titles = {home:"Kampanyalar", category:CAT[route.arg]?.name, play:campById(route.arg)?.brand, coupons:"Kuponlarım", how:"Nasıl çalışır", panel:"Kupon takip"};
+  const titles = {home:"Kampanyalar", category:CAT[route.arg]?.name, play:campById(route.arg)?.brand, coupons:"Kuponlarım", how:"Nasıl çalışır", panel:"Kupon takip", kasa:"Marka kasası"};
   document.title = (titles[route.name] ? titles[route.name] + " · " : "") + "1 Milyonuncu Marka";
   updateChrome();
   if (focusMain) { main.focus({preventScroll:true}); window.scrollTo(0, 0); }
@@ -498,7 +579,7 @@ function tick() {
 
 window.addEventListener("hashchange", () => {
   if (game) { document.body.classList.remove("playing"); cancelAnimationFrame(game.raf); Api.timeout(game.key); game = null; toast("Oyundan çıktın, bu kampanyadaki hakkın kullanıldı."); }
-  closeModal(); route = parseRoute(); render(true);
+  closeModal(); kasaMsg = null; route = parseRoute(); render(true);
 });
 window.addEventListener("storage", e => { if (e.key === KEY) { db = load(); if (!game) render(); } if (e.key === "lb:demoOffset") { demoOffset = Number(e.newValue) || 0; render(); } });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && modalClose) closeModal(); });
@@ -520,6 +601,7 @@ document.addEventListener("click", async e => {
   else if (a === "fill") { const n = Api.fillWithTestUsers(act.dataset.id); toast(`${n} test katılımcısı eklendi, kampanya kapandı.`); render(); }
   else if (a === "realtime") { demoOffset = 0; store("lb:demoOffset", null); render(); }
   else if (a === "csv") downloadCsv();
+  else if (a === "refund") { const r = Api.brandRefund(act.dataset.code); toast(r.ok ? "İade kaydedildi, komisyon geri alındı." : "Bu kupon iade edilemez."); render(); }
   else if (a === "reset") {
     modal(`<div class="modal" role="dialog" aria-modal="true" aria-labelledby="rT"><h2 id="rT">Tüm veriler silinsin mi?</h2><p class="muted" style="margin:0">Kullanıcılar, kuponlar ve deneme kayıtları bu tarayıcıdan silinir.</p>
       <div class="actions"><button class="btn primary" type="button" data-act="resetYes">Evet, sıfırla</button><button class="btn ghost" type="button" data-close>Vazgeç</button></div></div>`);
@@ -540,10 +622,14 @@ document.addEventListener("submit", e => {
   } else if (f.dataset.form === "demo") {
     const [h, m] = f.querySelector("#demoAt").value.split(":").map(Number);
     if (Number.isFinite(h) && Number.isFinite(m)) { setDemoTime(h, m); document.activeElement?.blur(); render(); toast(`Demo saati ${hhmm(h, m)} olarak ayarlandı.`); }
-  } else if (f.dataset.form === "redeem") {
-    const r = Api.redeem(f.dataset.code, parseFloat(f.sale.value));
-    if (r.error) return toast(r.error === "sale" ? "Satış tutarını gir." : "Bu kupon artık kullanılamaz.");
-    document.activeElement?.blur(); toast(`Komisyon: ${tl(r.coupon.commission)}`); render();
+  } else if (f.dataset.form === "kasa") {
+    const brand = f.brand.value, code = f.code.value.trim().toUpperCase(), step = e.submitter?.value || "validate";
+    const v = step === "order" ? Api.brandOrder(brand, code, f.order.value, parseFloat(f.amount.value)) : Api.brandValidate(brand, code);
+    const cp = v.coupon;
+    kasaMsg = {brand, code, ok:v.ok, html:!v.ok ? `<b>Reddedildi.</b> ${esc(v.reason)}` : step === "order" ?
+      `<b>Sipariş ${esc(cp.orderNo)} alındı${v.repeat ? " (tekrar bildirim, ikinci kez sayılmadı)" : ""}.</b> İndirim uygulandı, kupon kullanıldı olarak işaretlendi.<br>Satış ${tl(cp.sale)} → platform komisyonu <b>${tl(cp.commission)}</b>. <a href="#/panel">Kupon takipte gör</a>` :
+      `<b>Kod geçerli.</b> ${esc(cp.brand)} · ${cp.offer ? esc(cp.offer) : "kampanya ürününde"} · son kullanma ${fmtDateTime(cp.expiresAt)}. Şimdi sepet tutarını girip siparişi tamamla.`};
+    document.activeElement?.blur(); render();
   }
 });
 

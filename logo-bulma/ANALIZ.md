@@ -2,6 +2,40 @@
 
 Bu belge Excel'deki fikri inceler. Verideki hataları, eksik kuralları ve sitenin sorunsuz çalışması için yapılması gerekenleri listeler. Aynı klasördeki prototip (`index.html`) bu analizdeki kararlarla çalışır.
 
+## 0. Verilen kararlar
+
+| Konu | Karar | Uygulama |
+|---|---|---|
+| Deneme hakkı | Her kampanyada kişi başı **tek hak** | Yanlış logo, süre dolması ya da oyundan çıkmak hakkı bitirir |
+| Kupon kodu | **Kişiye özel, tek kullanımlık** | `CIV-7KQ2MX` biçiminde; prototipte `DEMO-` ön ekli |
+| %3 komisyon | Markanın sitesinde kullanılan kodu kontrol edebilmek | Markanın sitesi kodu bizden doğrular ve siparişi imzalı istekle bildirir. Ayrıntılar `ENTEGRASYON.md`'de, kod `server/` klasöründe. |
+| Logolar | Orijinal logolar kullanılacak, hukuki süreç platformda | Marka kütüphanesi `markalar.js` (1.208 marka). Logo dosyaları `tools/logo-indir.mjs` ile toplanır. |
+| Oyun tahtası | Kategoride çok marka var | Her oyunda kütüphaneden rastgele 24 logo gelir, hedef her zaman içindedir |
+
+### Marka kütüphanesi
+Hedef kategori başına 200 bilinen markaydı. Yalnızca Türkiye'de bilinen, var olduğu kesin markalar yazıldı; sayıyı doldurmak için uydurma marka eklenmedi.
+
+| Kategori | Marka sayısı | Not |
+|---|---|---|
+| Giyim | 146 | |
+| Ayakkabı | 104 | |
+| Ev Tekstil | 78 | |
+| Elektronik | 120 | |
+| Gözlük | 72 | |
+| Çanta | 72 | |
+| Süpermarket | 176 | Zincirler ve market ürünü markaları birlikte |
+| Saat | 82 | |
+| Bijuteri | 40 | |
+| Kozmetik | 146 | |
+| Çiçek | 5 | Sektör çoğunlukla yerel çiçekçilerden oluşuyor; bölgesel çiçekçi ortaklığı gerekir |
+| Yemek | 53 | |
+| Sağlık | 62 | İlaçlar çıkarıldı: Türkiye'de ilaç reklamı ve indirimi kısıtlıdır |
+| Cafe / Hastane vb. | 52 | |
+| Büyük Fırsat | – | Sektör değil; tüm kategorilerin logolarını kullanır |
+
+- **Listeyi markalar onaylamalı.** Liste markalarla sözleşme yapıldıkça güncellenmeli. Oyunda bir logonun çeldirici olarak görünmesi de o markanın logosunu kullanmak demektir.
+- **Logo dosyaları henüz yok.** Bu çalışma ortamının ağ politikası logo servislerine erişimi kapattığı için indirilemedi. Ağ açılınca `LOGO_DEV_TOKEN=… node tools/logo-indir.mjs` alan adı bilinen markaların logolarını indirir. Markanın kendi verdiği dosyalar `logos/elle/` klasörüne konur. Eksik kalanlar `logos/eksik.csv` dosyasına yazılır.
+
 ## 1. Fikrin özeti (Excel'den)
 
 | Konu | Excel'deki kural |

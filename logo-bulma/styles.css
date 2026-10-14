@@ -206,3 +206,17 @@ td.num{text-align:right}
 
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,30px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:60;max-width:calc(100vw - 32px)}
 .toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* orijinal logo görseli */
+.logo.has-img{background:#FFFFFF;padding:8px}
+.logo.has-img img{max-width:100%;max-height:100%;object-fit:contain;pointer-events:none}
+/* marka kasası */
+.kasa{max-width:560px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.frow>*{min-width:0}
+.kasa-out{border-radius:12px;padding:12px 14px;font-size:14px}
+.kasa-out.ok{background:var(--ok-bg);color:var(--ink)}
+.kasa-out.bad{background:var(--bad-bg);color:var(--bad)}
+.pill-demo{font-family:var(--ui);font-size:12px;font-weight:700;vertical-align:middle;background:var(--warn-bg);color:var(--warn);border-radius:99px;padding:2px 9px}
+.stat.warn{border-color:var(--warn);background:var(--warn-bg)}
+tr.is-flag td{background:var(--warn-bg)}
