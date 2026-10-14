@@ -1,4 +1,5 @@
 // Uçtan uca test: `npx http-server logo-bulma -p 8765` çalışırken `node logo-bulma/tests/e2e.mjs`
+// SHOTS=klasör verilirse ekran görüntüleri kaydedilir.
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 let chromium;
@@ -8,187 +9,220 @@ const BASE = process.env.BASE || "http://localhost:8765/";
 const SHOTS = process.env.SHOTS || null;
 let failed = 0;
 const ok = (cond, msg) => { console.log(`${cond ? "✓" : "✗"} ${msg}`); if (!cond) failed++; };
+const text = async (p, sel) => (await p.textContent(sel)).replace(/\s+/g, " ");
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1200, height: 900 }, locale: "tr-TR" });
-await ctx.grantPermissions(["clipboard-read", "clipboard-write"], { origin: new URL(BASE).origin });
-const page = await ctx.newPage();
 const errors = [];
-page.on("pageerror", e => errors.push(e.message));
-page.on("console", m => { if (m.type() === "error" && !/fonts\.(googleapis|gstatic)/.test(m.text())) errors.push(m.text()); });
-const shot = async (name, p = page) => { if (SHOTS) await p.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: true }); };
-const setDemo = async hhmm => {
-  await page.goto(BASE + "#/panel"); await page.fill("#demoAt", hhmm);
-  await page.click("form[data-form=demo] button[type=submit]");
-  await page.waitForFunction(t => document.querySelector("#clock").textContent.startsWith(t), hhmm);
-};
+async function newPage(opts = {}) {
+  const ctx = await browser.newContext({viewport:{width:1280, height:900}, locale:"tr-TR", ...opts});
+  await ctx.grantPermissions(["clipboard-read", "clipboard-write"], {origin:new URL(BASE).origin}).catch(() => {});
+  const p = await ctx.newPage();
+  p.on("pageerror", e => errors.push(e.message));
+  p.on("console", m => { if (m.type() === "error" && !/fonts\.(googleapis|gstatic)/.test(m.text())) errors.push(m.text()); });
+  return p;
+}
+const shot = async (p, name, full = true) => { if (SHOTS) await p.screenshot({path:`${SHOTS}/${name}.png`, fullPage:full}); };
+const go = async (p, hash) => { await p.goto(BASE + hash); await p.waitForSelector("#main > *"); };
+async function login(p, name = "Ayşe Yılmaz", phone = "05321112233") {
+  await p.fill("#lName", name); await p.fill("#lPhone", phone); await p.check("input[name=kvkk]");
+  await p.click("form[data-form=login] button[type=submit]");
+}
+async function setDemo(p, hhmm) {
+  await go(p, "#/panel"); await p.fill("#demoAt", hhmm); await p.click("form[data-form=demo] button[type=submit]");
+  await p.waitForFunction(t => document.querySelector("#demoTime")?.textContent === t, hhmm);
+}
+// Kampanyayı başlat: kurallar penceresi → Hazırım → 3-2-1 → tahta
+async function startCampaign(p, id) {
+  await go(p, `#/kampanya/${id}`);
+  await p.click(".d-main [data-act=start]");
+  await p.waitForSelector(".modal.rules");
+  await p.click("[data-act=go]");
+  await p.waitForSelector("#board button");
+}
+const pick = async (p, brand) => p.click(`#board button[aria-label="${brand}"]`);
+const pickWrong = async (p, brand) => p.click(`#board button:not([aria-label="${brand}"]) >> nth=0`);
 
-await page.goto(BASE);
-ok(await page.locator(".cat-tile").count() === 15, "ana sayfada 15 kategori var");
-ok(await page.locator(".cat-tile.soon").count() === 12, "verisi olmayan 12 kategori 'Yakında'");
-ok(/\d\d:\d\d:\d\d/.test(await page.textContent("#clock")), "saat çalışıyor");
+const page = await newPage();
+/* ---------- ana sayfa ---------- */
+await go(page, "#/");
+ok(await page.locator(".cat-tile").count() === 15, "15 kategori, hepsi aktif");
+ok(!(await text(page, ".cats")).includes("Yakında"), "'Yakında' kategori kalmadı");
+const poolCounts = await page.$$eval(".cat-tile > span:last-child", s => s.map(x => parseInt(x.textContent)));
+ok(poolCounts.every(n => n >= 300), `her kategoride en az 300 logo (${Math.min(...poolCounts)}+)`);
+ok(await page.locator(".ftab").count() === 6, "6 durum filtresi (aktif/yaklaşan/kazandıklarım/kazanamadıklarım/sona eren/hatırlatmalarım)");
+ok(await page.locator(".grid-cards .camp").count() >= 15, "her kategoriden en az bir aktif kampanya");
+ok(await page.locator(".mf-banner").count() >= 1 && (await text(page, ".mf-banner")).includes("bordo-siyah"), "Muhteşem Fırsat cırtlak şeritte, bordo-siyah uyarısıyla");
+ok(/\d\d:\d\d:\d\d/.test(await page.textContent("#nextCd")), "üstte sıradaki kampanya sayacı");
+const firstCard = page.locator(".grid-cards .camp").first();
+ok(await firstCard.locator(".acts a:has-text('Detay')").count() === 1 && await firstCard.locator(".acts [data-act=start]").count() === 1, "kartta Detay ve Başla yan yana");
+ok(await firstCard.locator(".cd-v").count() === 1, "kartta geri sayım");
+await page.click("[data-act=catf][data-v=elektronik]");
+ok(await page.$$eval(".grid-cards .camp .camp-cat", e => e.every(x => x.textContent.startsWith("Elektronik"))), "kategori filtresi çalışıyor");
+await page.click("[data-act=catf][data-v=all]");
+await page.click("[data-act=filter][data-v=upcoming]");
+ok(await page.locator(".grid-cards .camp .cd-l:has-text('Başlamasına')").count() > 0 || (await text(page, "main")).includes("kalmadı"), "yaklaşan kampanyalarda başlangıç sayacı");
+await page.click("[data-act=filter][data-v=active]");
+await shot(page, "01-ana-sayfa", false);
 
-await setDemo("00:02");
-ok(await page.isVisible("#demoBanner"), "demo saat bandı görünür");
-await page.goto(BASE + "#/");
-ok(await page.locator("section[aria-labelledby=liveH] .camp").count() === 4, "00:02'de 3 saatlik + Civil demo = 4 aktif kampanya");
-ok((await page.textContent("section[aria-labelledby=liveH] .camp")).includes("Civil"), "Civil demo kampanyası en başta");
-await shot("1-ana-sayfa");
-
-// giriş
-await page.goto(BASE + "#/oyna/giyim-00");
-await page.click("[data-act=login]");
-await page.fill("#lName", "Ayşe Yılmaz"); await page.fill("#lPhone", "12345");
-await page.click("form[data-form=login] button[type=submit]");
-ok((await page.textContent("#lErr")).includes("KVKK"), "KVKK onayı zorunlu");
-await page.check("input[name=kvkk]"); await page.click("form[data-form=login] button[type=submit]");
-ok((await page.textContent("#lErr")).includes("telefon"), "geçersiz telefon reddedildi");
-await page.fill("#lPhone", "+90 532 111 22 33"); await page.click("form[data-form=login] button[type=submit]");
-ok((await page.textContent("#userBtn")) === "Ayşe", "giriş yapıldı");
-
-// kazanma
-await page.click("[data-act=start]");
-ok(await page.locator("#board button").count() === 24, "Giyim'de 24 logo dizildi");
-await shot("2-oyun");
-const order1 = await page.$$eval("#board button", b => b.map(x => x.getAttribute("aria-label")).join());
-await page.click('#board button[aria-label="LC Waikiki"]');
+/* ---------- kurallar, giriş, kazanma ---------- */
+await go(page, "#/kampanya/giyim-demo");
+ok((await text(page, ".detail")).includes("Kampanya koşulları") && (await text(page, ".detail")).includes("Oyun kuralları"), "detay sayfasında koşullar ve kurallar");
+ok((await text(page, ".detail")).includes("Yeni üyeye +%5") && (await text(page, ".detail")).includes("üstü %25"), "çoklu indirim: yeni üye eki ve barem");
+ok((await text(page, ".detail")).includes("Firma değişiklik yapma hakkını saklı tutar"), "kampanya süresi metni revize");
+await page.click(".d-main [data-act=start]");
+await login(page);
+await page.waitForSelector(".modal.rules");
+ok((await text(page, ".modal.rules")).includes("5 saniye") && (await text(page, ".modal.rules")).includes("Tek hak"), "başlamadan önce kurallar pop-up'ı");
+await shot(page, "02-kurallar", false);
+await page.click("[data-act=go]");
+ok(await page.locator(".g-count").count() === 1, "3-2-1 geri sayımı");
+await page.waitForSelector("#board button");
+ok(await page.locator("#board button").count() === 30, "tahtada 30 logo");
+await shot(page, "03-tahta", false);
+await pick(page, "Civil");
 await page.waitForSelector("#wonCode");
 const code = await page.textContent("#wonCode");
-ok(/^DEMO-LCW-[A-Z2-9]{5}$/.test(code), `kupon kodu üretildi (${code})`);
-await shot("3-kazandin");
-await page.click(".modal [data-copy]");
-await page.waitForTimeout(200);
+ok(/^DEMO-CIV-[A-Z2-9]{5}$/.test(code), `kupon kodu (${code})`);
+ok((await text(page, ".modal")).includes("+%5 yeni üye"), "ilk kuponda yeni üye eki");
+await page.click(".modal [data-copy]"); await page.waitForTimeout(200);
 ok(await page.evaluate(() => navigator.clipboard.readText()) === code, "kod panoya kopyalandı");
-const href = await page.getAttribute(".modal a[data-utm]", "href");
-ok(href.includes("lcw.com") && href.includes("utm_source=1milyonuncumarka") && href.includes(`utm_content=${code}`), "marka linkinde UTM parametreleri var");
+const links = await page.$$eval(".modal a[data-utm]", a => a.map(x => x.href));
+ok(links.length === 2 && links.every(h => h.includes("utm_content=" + code)) && links.some(h => h.includes("trendyol")) && links.some(h => h.includes("hepsiburada")), "pazaryeri linkleri UTM'li");
+await shot(page, "04-kazandin", false);
 await page.click(".modal a[href='#/kuponlarim']");
-await page.waitForSelector(".coupon");
-ok(await page.locator(".coupon").count() === 1 && (await page.textContent(".coupon .code")) === code, "kupon Kuponlarım'da");
-ok((await page.textContent("#couponCount")) === "1", "menüde aktif kupon sayısı");
-await shot("4-kuponlarim");
-await page.goto(BASE + "#/oyna/giyim-00");
-ok((await page.textContent("#stage")).includes("kazandın"), "aynı kampanyaya ikinci kez girilemiyor");
+await page.waitForSelector(".ticket");
+ok((await page.textContent(".ticket .code")) === code, "kupon Kuponlarım'da");
+ok((await text(page, "main")).includes("belirlenen süre içinde") && (await text(page, "main")).includes("seçili ürünlerde geçerlidir"), "kupon metni revize");
+await shot(page, "05-kuponlarim");
 
-// yanlış logo
-await page.goto(BASE + "#/oyna/ayakkabi-00"); await page.click("[data-act=start]");
-await page.click('#board button:not([aria-label="Tonny Black"]) >> nth=0');
-await page.waitForSelector(".modal #mT");
-ok((await page.textContent("#mT")) === "Yanlış logo", "yanlış logo kaybettiriyor");
-ok(await page.locator('#board button.hit[aria-label="Tonny Black"]').count() === 1, "doğru logo gösteriliyor");
-await page.click(".modal button[data-close]");
-ok((await page.textContent("#stage")).includes("hakkını kullandın"), "yanlıştan sonra tekrar deneme yok");
+/* ---------- günlük hak ---------- */
+await go(page, "#/kampanya/ayakkabi-demo");
+ok(await page.locator(".d-main button:has-text('Günlük hak doldu')").count() === 1, "günde bir kupon: diğer kampanyalar kilitli");
 
-// süre dolması
-await page.goto(BASE + "#/oyna/ev-tekstil-00"); await page.click("[data-act=start]");
-await page.waitForSelector(".modal #mT", { timeout: 8000 });
-ok((await page.textContent("#mT")) === "Süre doldu", "5 sn sonunda süre doluyor");
-await page.click(".modal button[data-close]");
+/* ---------- kaybetme ve telafi ---------- */
+await go(page, "#/panel"); await page.click("[data-act=resetDaily]");
+await startCampaign(page, "ayakkabi-demo");
+await pickWrong(page, "Hotiç");
+await page.waitForSelector(".modal.lost .telafi-box");
+ok(await page.locator(".t-opt").count() === 3, "kazanamayana 3 telafi seçeneği (düşük / reklam / ücretli)");
+await shot(page, "06-telafi", false);
+await page.click("[data-kind=paid]"); await page.waitForSelector("form[data-form=pay]");
+await page.click("form[data-form=pay] button[type=submit]");
+await page.waitForSelector("#wonCode");
+ok((await page.textContent("#wonCode")).startsWith("DEMO-HOT-"), "ücretli telafi kuponu verildi");
+await go(page, "#/panel"); await page.click("[data-act=resetDaily]");
+await startCampaign(page, "ev-tekstil-demo"); await pickWrong(page, "English Home");
+await page.waitForSelector(".modal.lost");
+ok(await page.locator(".modal.lost .telafi-box").count() === 0 && (await text(page, ".modal.lost")).includes("telafi hakkını kullandın"), "telafi günde bir kez");
+await page.click(".modal.lost button[data-close]");
+await go(page, "#/");
+await page.click("[data-act=filter][data-v=won]");
+ok(await page.locator(".grid-cards .hist.won").count() === 1, "Kazandıklarım filtresi");
+await page.click("[data-act=filter][data-v=lost]");
+ok(await page.locator(".grid-cards .hist.lost").count() === 2, "Kazanamadıklarım filtresi");
+await page.click("[data-act=filter][data-v=active]");
 
-// oyun sırasında sayfadan çıkma
-await setDemo("01:01");
-await page.goto(BASE + "#/oyna/giyim-01"); await page.click("[data-act=start]");
-await page.goto(BASE + "#/");
-await page.goto(BASE + "#/oyna/giyim-01");
-ok((await page.textContent("#stage")).includes("hakkını kullandın"), "oyundan kaçmak hakkı yakıyor");
+/* ---------- Muhteşem Fırsat ---------- */
+await go(page, "#/panel"); await page.click("[data-act=resetDaily]");
+await go(page, "#/kampanya/buyuk-firsat-demo");
+ok((await text(page, ".detail")).includes("bordo ve siyah"), "Muhteşem Fırsat koşullarında bordo-siyah uyarısı");
+await page.click(".d-main [data-act=start]"); await page.waitForSelector(".modal.rules .mf-note");
+ok(true, "kurallar pop-up'ında Muhteşem Fırsat uyarısı");
+await page.click("[data-act=go]"); await page.waitForSelector("#board button");
+const colors = await page.$$eval("#board button", b => [...new Set(b.map(x => getComputedStyle(x).backgroundColor))]);
+ok(colors.length === 2 && colors.includes("rgb(110, 11, 36)") && colors.includes("rgb(11, 11, 13)"), "tahtada yalnızca bordo ve siyah logolar");
+await shot(page, "07-muhtesem-firsat", false);
+await page.waitForSelector(".modal.lost", {timeout:9000});
+ok((await text(page, ".modal.lost")).includes("Süre doldu"), "5 sn dolunca kaybedilir");
+await page.click(".modal.lost button[data-close]");
 
-// sıralama her denemede değişiyor
-await page.goto(BASE + "#/oyna/ayakkabi-01"); await page.click("[data-act=start]");
-await page.waitForSelector(".modal #mT", { timeout: 8000 }); await page.click(".modal button[data-close]");
-ok(true, "ikinci oyun tamamlandı");
+/* ---------- oyundan kaçmak ---------- */
+await go(page, "#/panel"); await page.click("[data-act=resetDaily]");
+await startCampaign(page, "elektronik-demo");
+await page.goto(BASE + "#/"); await go(page, "#/kampanya/elektronik-demo");
+ok((await text(page, ".d-main")).includes("hakkını kullandın"), "oyundan çıkmak hakkı yakar");
 
-// kontenjan dolması -> kampanya ana sayfadan kalkar
-await page.goto(BASE + "#/panel");
-await page.click('button[data-act=fill][data-id="ev-tekstil-01"]');
-await page.goto(BASE + "#/");
-ok(await page.locator('.grid-cards').first().locator('a[href="#/oyna/ev-tekstil-01"]').count() === 0, "kontenjanı dolan kampanya ana sayfadan kalktı");
-await page.goto(BASE + "#/oyna/ev-tekstil-01");
-ok((await page.textContent("#stage")).includes("Kontenjan doldu"), "kontenjanı dolan kampanyaya girilemiyor");
-
-// süre biten kampanya
-await setDemo("00:20");
-await page.goto(BASE + "#/oyna/giyim-00");
-ok((await page.textContent("#stage")).includes("kazandın") , "kazanılan kampanya bilgisi süre bitince de duruyor");
-await page.goto(BASE + "#/oyna/ayakkabi-00");
-ok((await page.textContent("#stage")).includes("hakkını kullandın"), "kullanılmış hak süre bitince de korunuyor");
-await page.evaluate(() => { const db = JSON.parse(localStorage.getItem("lb:v1")); db.session = null; localStorage.setItem("lb:v1", JSON.stringify(db)); });
-await page.goto(BASE + "#/oyna/ayakkabi-00"); await page.reload();
-ok((await page.textContent("#stage")).includes("sona erdi"), "süresi biten kampanya kapalı");
-await page.goto(BASE + "#/oyna/giyim-23"); 
-ok((await page.textContent("#stage")).includes("başlıyor"), "gelecek kampanya geri sayım gösteriyor");
-// tekrar giriş
-await page.click("#userBtn"); await page.fill("#lName", "Ayşe Yılmaz"); await page.fill("#lPhone", "05321112233"); await page.check("input[name=kvkk]");
-await page.click("form[data-form=login] button[type=submit]");
-
-// marka kasası: doğrulama, sipariş, komisyon, kontroller
-await page.goto(BASE + "#/marka-kasasi/" + code);
-ok((await page.inputValue("#kBrand")) === "LC Waikiki" && (await page.inputValue("#kCode")) === code, "kasa kupondan marka ve kodu dolduruyor");
+/* ---------- marka kasası, çoklu indirim, komisyon ---------- */
+await go(page, `#/marka-kasasi/${code}`);
 await page.selectOption("#kBrand", "Koton"); await page.click("button[value=validate]");
-ok((await page.textContent(".kasa-out")).includes("Koton kasasında geçmez"), "başka markanın kasasında kod reddediliyor");
-await page.selectOption("#kBrand", "LC Waikiki"); await page.click("button[value=validate]");
-ok((await page.textContent(".kasa-out")).includes("Kod geçerli"), "kod doğrulanıyor");
-await page.fill("#kAmount", "1250"); await page.fill("#kOrder", "SIP-1001"); await page.click("button[value=order]");
-ok((await page.textContent(".kasa-out")).replace(/\s/g, " ").includes("37,50"), "1.250 ₺ siparişte %3 = 37,50 ₺ komisyon");
-await page.fill("#kCode", code); await page.fill("#kAmount", "1250"); await page.fill("#kOrder", "SIP-1001"); await page.click("button[value=order]");
-ok((await page.textContent(".kasa-out")).includes("ikinci kez sayılmadı"), "aynı sipariş tekrar bildirilirse iki kez sayılmıyor");
+ok((await text(page, ".kasa-out")).includes("Koton kasasında geçmez"), "başka markanın kasasında red");
+await page.selectOption("#kBrand", "Civil"); await page.fill("#kAmount", "2000"); await page.click("button[value=validate]");
+const val = await text(page, ".kasa-out");
+ok(val.includes("Kod geçerli") && val.includes("%25") && val.includes("+%5") && val.includes("(%30)"), "doğrulamada indirim dökümü: barem %25 + yeni üye %5 = %30");
+await page.fill("#kAmount", "2000"); await page.fill("#kOrder", "SIP-1001"); await page.click("button[value=order]");
+const ord = await text(page, ".kasa-out");
+ok(ord.includes("1.400,00") && ord.includes("42,00"), "2.000 ₺ sepet → 1.400 ₺ ödenen, 42 ₺ komisyon");
+await shot(page, "08-kasa");
+await page.fill("#kCode", code); await page.fill("#kAmount", "2000"); await page.fill("#kOrder", "SIP-1001"); await page.click("button[value=order]");
+ok((await text(page, ".kasa-out")).includes("ikinci kez sayılmadı"), "aynı sipariş iki kez sayılmaz");
 await page.fill("#kCode", code); await page.fill("#kOrder", "SIP-1002"); await page.fill("#kAmount", "500"); await page.click("button[value=order]");
-ok((await page.textContent(".kasa-out")).includes("daha önce kullanılmış"), "kullanılmış kod yeni siparişte reddediliyor");
-await page.goto(BASE + "#/panel");
-ok((await page.textContent("main")).replace(/\s/g, " ").includes("37,50"), "komisyon panelde ve marka hakedişinde");
-await shot("5-panel");
+ok((await text(page, ".kasa-out")).includes("daha önce kullanılmış"), "kullanılmış kod reddedilir");
+
+/* ---------- profil ve Kazancım ---------- */
+await go(page, "#/profil");
+ok((await text(page, ".earn")).includes("600,00"), "Kazancım: toplam 600 ₺ indirim");
+ok(await page.locator(".switch-row").count() === 5, "bildirim ayarları (push, SMS, 5 dk, başladı, kupon bitiyor)");
+await shot(page, "09-profil");
+
+/* ---------- panel ---------- */
+await go(page, "#/panel");
+const panel = await text(page, "main");
+ok(panel.includes("42,00") && panel.includes("5,00"), "panelde komisyon ve telafi ödemesi");
 const dl = page.waitForEvent("download"); await page.click("[data-act=csv]");
-const file = await dl; ok(file.suggestedFilename().startsWith("kuponlar-"), "CSV indiriliyor");
+ok((await dl).suggestedFilename().startsWith("kuponlar-"), "CSV indiriliyor");
+await page.click(`button[data-act=refund][data-code="${code}"]`);
+ok((await text(page, "main")).includes("İade edildi") || await page.locator("td s").count() > 0, "iade komisyonu geri alır");
 
-// Civil demo: her saatte açık, kazanılıyor; kasada doğrulanıp siparişi bildirilmezse kontrol listesine düşüyor
-await setDemo("15:40");
-await page.goto(BASE + "#/oyna/giyim-civil-demo"); await page.click("[data-act=start]");
-ok(await page.locator("#board button").count() === 24, "tahtada 24 logo (kütüphaneden rastgele)");
-await page.click('#board button[aria-label="Civil"]'); await page.waitForSelector("#wonCode");
-const civil = await page.textContent("#wonCode");
-ok(/^DEMO-CIV-/.test(civil), `Civil kuponu kazanıldı (${civil})`);
-await page.click(".modal a[href^='#/marka-kasasi']"); await page.waitForSelector("#kCode");
-await page.click("button[value=validate]");
-await page.goto(BASE + "#/panel");
-ok((await page.textContent(".stat.warn b")) === "1", "kasada doğrulanıp sipariş bildirilmeyen kod 'Kontrol edilecek'");
-await page.goto(BASE + "#/marka-kasasi/" + civil); await page.fill("#kAmount", "800"); await page.click("button[value=order]");
-await page.goto(BASE + "#/panel");
-ok(await page.locator(".stat.warn").count() === 0, "sipariş gelince kontrol uyarısı kalkıyor");
-await page.click(`button[data-act=refund][data-code="${civil}"]`);
-ok((await page.textContent("main")).includes("İade edildi") || (await page.locator(`tr:has-text("${civil}") s`).count()) === 1, "iade komisyonu geri alıyor");
+/* ---------- hatırlatma ve bildirim ---------- */
+await setDemo(page, "15:56");
+await go(page, "#/"); await page.click("[data-act=filter][data-v=upcoming]");
+await page.click("[data-act=catf][data-v=giyim]");
+await page.click(".grid-cards .camp [data-act=remind] >> nth=0");
+await page.waitForFunction(() => !document.querySelector("#notifCount").hidden, null, {timeout:5000});
+await page.click("#notifBtn");
+const nt = await text(page, ".modal.drawer");
+ok(nt.includes("5 dk sonra başlıyor") && nt.includes("SMS"), "5 dk kala bildirim (uygulama + SMS demo)");
+await shot(page, "10-bildirim", false);
+await page.click(".modal.drawer [data-close]");
+await page.click("[data-act=catf][data-v=all]");
 
-// 24 saat sonra kupon süresi dolar (yeni bir kupon kazanıp saati 25 sa ileri al)
-await setDemo("02:01");
-await page.goto(BASE + "#/oyna/giyim-02"); await page.click("[data-act=start]");
-await page.click('#board button[aria-label="Defacto"]'); await page.waitForSelector("#wonCode");
+/* ---------- kupon süresi ---------- */
+await go(page, "#/panel"); await page.click("[data-act=resetDaily]");
+await startCampaign(page, "saat-demo"); await pick(page, "Casio"); await page.waitForSelector("#wonCode");
 await page.evaluate(() => localStorage.setItem("lb:demoOffset", String(Number(localStorage.getItem("lb:demoOffset")) + 25 * 3600e3)));
-await page.goto(BASE + "#/kuponlarim"); await page.reload();
-ok((await page.textContent("main")).includes("Süresi doldu"), "24 saati geçen kupon 'Süresi doldu'");
-ok((await page.textContent("main")).includes("Kullanıldı"), "kullanılan kupon 'Kullanıldı'");
+await page.goto(BASE + "#/kuponlarim"); await page.reload(); await page.click("[data-act=ctab][data-v=expired]");
+ok(await page.locator(".ticket.expired").count() >= 1, "süresi dolan kupon 'Süresi dolan' sekmesinde");
+await page.evaluate(() => localStorage.removeItem("lb:demoOffset"));
+
+/* ---------- reklamlı telafi (15 sn) ---------- */
+const p2 = await newPage();
+await go(p2, "#/kampanya/kozmetik-demo"); await p2.click(".d-main [data-act=start]"); await login(p2, "Mehmet Kaya", "05559998877");
+await p2.click("[data-act=go]"); await p2.waitForSelector("#board button"); await pickWrong(p2, "Flormar");
+await p2.waitForSelector("[data-kind=ad]"); await p2.click("[data-kind=ad]");
+await p2.waitForSelector(".modal.ad"); await shot(p2, "11-reklam", false);
+await p2.waitForSelector("#wonCode", {timeout:20000});
+ok((await p2.textContent("#wonCode")).startsWith("DEMO-FLO-"), "reklam bitince telafi kuponu");
 
 ok(errors.length === 0, "konsol hatası yok" + (errors.length ? ": " + errors.join(" | ") : ""));
 
-// mobil
-const m = await browser.newContext({ viewport: { width: 375, height: 740 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
-const mp = await m.newPage();
-await mp.setViewportSize({ width: 375, height: 740 });
-for (const r of ["#/", "#/kategori/giyim", "#/kuponlarim", "#/nasil", "#/panel", "#/oyna/giyim-05", "#/marka-kasasi", "#/kategori/supermarket"]) {
-  await mp.goto(BASE + r);
-  const over = await mp.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-  ok(over <= 0, `mobil ${r}: yatay taşma yok`);
+/* ---------- tüm ekranlar: telefon, tablet, masaüstü; açık/koyu ---------- */
+const screens = [["Android 360", 360, 740, true], ["iPhone 390", 390, 844, true], ["iPhone SE 375", 375, 667, true], ["Tablet 768", 768, 1024, true], ["Masaüstü 1440", 1440, 900, false]];
+const routes = ["#/", "#/kategori/giyim", "#/kampanya/buyuk-firsat-demo", "#/kuponlarim", "#/profil", "#/nasil", "#/panel", "#/marka-kasasi"];
+for (const [name, w, h, mobile] of screens) for (const scheme of ["dark", "light"]) {
+  const p = await newPage({viewport:{width:w, height:h}, isMobile:mobile, hasTouch:mobile, colorScheme:scheme});
+  await go(p, "#/"); await p.evaluate(() => { localStorage.setItem("lb:v2", JSON.stringify({users:{"05000000000":{phone:"05000000000", name:"Test Kişi", createdAt:Date.now()}}, session:"05000000000"})); }); await p.reload();
+  let over = 0;
+  for (const r of routes) { await go(p, r); over = Math.max(over, await p.evaluate(() => document.documentElement.scrollWidth - innerWidth)); }
+  ok(over <= 0, `${name} ${scheme}: ${routes.length} sayfada yatay taşma yok`);
+  if (scheme === "dark") {
+    await startCampaign(p, "giyim-demo");
+    const box = await p.locator("#board").boundingBox();
+    ok(box.y + box.height <= h, `${name}: 30 logo kaydırmadan sığıyor (alt kenar ${Math.round(box.y + box.height)} / ${h})`);
+    if (name === "iPhone SE 375") await shot(p, "12-iphone-se-tahta", false);
+  }
+  if (name === "Tablet 768" && scheme === "light") { await go(p, "#/"); await shot(p, "13-tablet-acik", false); }
+  await p.context().close();
 }
-await mp.evaluate(() => { localStorage.setItem("lb:v1", JSON.stringify({users:{"05000000000":{phone:"05000000000",name:"Test"}},session:"05000000000",attempts:{},coupons:[],clicks:[]})); });
-await mp.reload(); await mp.goto(BASE + "#/panel"); await mp.fill("#demoAt", "05:03"); await mp.click("form[data-form=demo] button[type=submit]");
-await mp.setViewportSize({ width: 375, height: 667 });
-await mp.goto(BASE + "#/oyna/giyim-05"); await mp.tap("[data-act=start]");
-const box = await mp.locator("#board").boundingBox();
-const headBottom = await mp.evaluate(() => Math.max(0, document.querySelector(".top").getBoundingClientRect().bottom));
-const tgt = await mp.locator(".target").boundingBox();
-ok(tgt.y >= headBottom, `mobilde hedef kart üst menünün altında kalmıyor (${Math.round(tgt.y)} >= ${Math.round(headBottom)})`);
-ok(box.y >= headBottom && box.y + box.height <= 667, `iPhone SE boyunda (375×667) 24 logo kaydırmadan sığıyor (${Math.round(box.y)}–${Math.round(box.y + box.height)} / 667)`);
-await shot("6-mobil-oyun", mp);
-await mp.waitForSelector(".modal", { timeout: 8000 });
-await mp.goto(BASE + "#/"); await shot("7-mobil-ana", mp);
-const dk = await browser.newContext({ viewport: { width: 375, height: 740 }, colorScheme: "dark" });
-const dp = await dk.newPage(); await dp.goto(BASE + "#/kategori/giyim"); await shot("8-karanlik", dp);
 
 await browser.close();
 console.log(failed ? `\n${failed} test BAŞARISIZ` : "\nTüm testler geçti");

@@ -1,30 +1,39 @@
 // 1 Milyonuncu Marka: kampanya verisi.
 // logo_bulma.xlsx dosyasından üretildi (Sayfa1, satır 4-27). Düzeltmeler için ANALIZ.md'ye bak.
+// Diğer 12 kategorinin programı, demo kampanyalar ve indirim koşulları kurallar.js'de üretilir.
 // Gerçek sistemde bu liste yönetim panelinden girilir ve sunucudan gelir.
 window.LB_DATA = {
   findSecDefault: 5,
-  couponValidHours: 24,
+  couponValidHours: 24,         // varsayılan; kampanya bazında validHours ile değişir
   commissionRate: 0.03,
   timeZone: "Europe/Istanbul",
+  boardSize: 30,                // oyunda tek seferde gösterilen logo (hedef dahil)
+  minPool: 300,                 // her kategoride oyuna giren en az logo sayısı
+  dailyWinLimit: 1,             // müşteri başına günlük kupon kazanım hakkı
+  dailyTelafiLimit: 1,          // günlük telafi kuponu hakkı
+  newMemberBonus: 5,            // ilk kuponunu kazanan yeni üyeye ek indirim (puan)
+  telafi: {lowShare: 0.4, adShare: 0.6, paidShare: 1, fee: 5, adSec: 15},
+  // Kategoriler: renk (kart ve ikon vurgusu) ve ikon anahtarı (app.js içindeki SVG seti)
   categories: [
-    {slug:"giyim", name:"Giyim", icon:"👕"},
-    {slug:"ayakkabi", name:"Ayakkabı", icon:"👟"},
-    {slug:"ev-tekstil", name:"Ev Tekstil", icon:"🛏️"},
-    {slug:"elektronik", name:"Elektronik", icon:"📱"},
-    {slug:"gozluk", name:"Gözlük", icon:"🕶️"},
-    {slug:"canta", name:"Çanta", icon:"👜"},
-    {slug:"supermarket", name:"Süpermarket", icon:"🛒"},
-    {slug:"saat", name:"Saat", icon:"⌚"},
-    {slug:"bijuteri", name:"Bijuteri", icon:"💍"},
-    {slug:"kozmetik", name:"Kozmetik", icon:"💄"},
-    {slug:"cicek", name:"Çiçek", icon:"💐"},
-    {slug:"yemek", name:"Yemek", icon:"🍔"},
-    {slug:"saglik", name:"Sağlık", icon:"🩺"},
-    {slug:"cafe-hastane", name:"Cafe / Hastane vb.", icon:"☕"},
-    {slug:"buyuk-firsat", name:"Büyük Fırsat", icon:"🎁"}
+    {slug:"giyim", name:"Giyim", icon:"shirt", color:"#FF3D7F"},
+    {slug:"ayakkabi", name:"Ayakkabı", icon:"shoe", color:"#FF7A1A"},
+    {slug:"ev-tekstil", name:"Ev Tekstil", icon:"home", color:"#FFC21A"},
+    {slug:"elektronik", name:"Elektronik", icon:"phone", color:"#2EC5FF"},
+    {slug:"gozluk", name:"Gözlük", icon:"glasses", color:"#8B5CFF"},
+    {slug:"canta", name:"Çanta", icon:"bag", color:"#FF5A36"},
+    {slug:"supermarket", name:"Süpermarket", icon:"cart", color:"#22D37A"},
+    {slug:"saat", name:"Saat", icon:"watch", color:"#5B8CFF"},
+    {slug:"bijuteri", name:"Bijuteri", icon:"gem", color:"#E94BFF"},
+    {slug:"kozmetik", name:"Kozmetik", icon:"sparkle", color:"#FF4FA3"},
+    {slug:"cicek", name:"Çiçek", icon:"flower", color:"#FF6FB1"},
+    {slug:"yemek", name:"Yemek", icon:"burger", color:"#FF9F1C"},
+    {slug:"saglik", name:"Sağlık", icon:"heart", color:"#10D9C4"},
+    {slug:"cafe-hastane", name:"Cafe / Hastane vb.", icon:"coffee", color:"#C08457"},
+    {slug:"buyuk-firsat", name:"Büyük Fırsat", icon:"gift", color:"#D4FF2A"}
   ],
-  // Oyunda tek seferde gösterilen logo sayısı (hedef dahil). Kalanlar markalar.js kütüphanesinden rastgele gelir.
-  boardSize: 24,
+  // Pazaryeri linkleri: marka panelden kendi mağaza linklerini girer ({"Civil":[{ad:"Trendyol mağazası", url:"…"}]}).
+  brandLinks: {},
+  marketplaceSearch: true,
   // Yalnızca alan adından emin olunan markalar; diğerleri panelden girilmeli.
   brandUrls: {
     "LC Waikiki":"https://www.lcw.com", "Defacto":"https://www.defacto.com.tr", "Koton":"https://www.koton.com",
@@ -103,8 +112,6 @@ window.LB_DATA = {
   {"id":"ev-tekstil-20","cat":"ev-tekstil","hour":20,"brand":"Evidea","offer":null,"findSec":5,"durationMin":15,"quota":50},
   {"id":"ev-tekstil-21","cat":"ev-tekstil","hour":21,"brand":"English Home","offer":null,"findSec":5,"durationMin":15,"quota":5},
   {"id":"ev-tekstil-22","cat":"ev-tekstil","hour":22,"brand":"Madame Coco","offer":null,"findSec":5,"durationMin":15,"quota":20},
-  {"id":"ev-tekstil-23","cat":"ev-tekstil","hour":23,"brand":"Karaca","offer":null,"findSec":5,"durationMin":15,"quota":50},
-  // Demo: günün her saati açık, denemek için. Excel'deki 15:00 Civil kampanyasından ayrıdır.
-  {"id":"giyim-civil-demo","cat":"giyim","hour":0,"brand":"Civil","offer":"Demo kampanya: seçili ürünlerde %20 indirim","findSec":5,"durationMin":1440,"quota":1000,"demo":true}
+  {"id":"ev-tekstil-23","cat":"ev-tekstil","hour":23,"brand":"Karaca","offer":null,"findSec":5,"durationMin":15,"quota":50}
   ]
 };

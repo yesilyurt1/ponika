@@ -4,30 +4,43 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>1 Milyonuncu Marka</title>
-<meta name="description" content="Saat başı yeni marka: logoyu 5 saniyede bul, indirim kuponunu kap.">
-<meta name="theme-color" content="#FFF8EE" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#14121C" media="(prefers-color-scheme: dark)">
+<meta name="description" content="Her saat başı yeni marka: logoyu 5 saniyede bul, kişiye özel indirim kuponunu kap.">
+<meta name="theme-color" content="#0E0B1F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="1M Marka">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=Inter:wght@400;500;600;700&family=Archivo+Black&family=Playfair+Display:ital,wght@1,700&family=Bebas+Neue&family=Pacifico&family=Righteous&family=Space+Mono:wght@700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800;900&family=Manrope:wght@500;600;700;800&family=Archivo+Black&family=Playfair+Display:ital,wght@1,700&family=Bebas+Neue&family=Pacifico&family=Righteous&family=Space+Mono:wght@700&display=swap">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <a class="skip" href="#main">İçeriğe geç</a>
+<div class="bg-glow" aria-hidden="true"></div>
 <header class="top">
-  <a class="brand" href="#/" aria-label="Ana sayfa">
+  <a class="brand" href="#/" aria-label="1 Milyonuncu Marka ana sayfa">
     <span class="brand-mark" aria-hidden="true">1M</span>
     <span class="brand-name">1 Milyonuncu <b>Marka</b></span>
   </a>
   <nav class="nav" aria-label="Ana menü">
     <a href="#/" data-nav="home">Kampanyalar</a>
-    <a href="#/kuponlarim" data-nav="coupons">Kuponlarım <span class="count" id="couponCount" hidden></span></a>
+    <a href="#/kuponlarim" data-nav="coupons">Kuponlarım <span class="count" data-count-coupons hidden></span></a>
     <a href="#/nasil" data-nav="how">Nasıl çalışır</a>
     <a href="#/panel" data-nav="panel">Kupon takip</a>
     <a href="#/marka-kasasi" data-nav="kasa">Marka kasası</a>
   </nav>
   <div class="top-right">
-    <span class="clock" id="clock" title="Türkiye saati">--:--:--</span>
+    <span class="next" title="Bir sonraki saat başı kampanyalarının başlamasına kalan süre (Türkiye saati)">
+      <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18 M12 7v5l3 2"/></svg>
+      <span class="next-l">Sıradaki <b id="nextAt">--:--</b></span><b id="nextCd" class="next-cd">--:--:--</b>
+    </span>
+    <button class="icon-btn bell" id="notifBtn" type="button" aria-label="Bildirimler">
+      <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4Z M10 21h4"/></svg>
+      <span class="count" id="notifCount" hidden></span>
+    </button>
     <button class="userbtn" id="userBtn" type="button">Giriş yap</button>
   </div>
 </header>
@@ -37,13 +50,22 @@
 </div>
 <main id="main" tabindex="-1"></main>
 <footer class="foot">
-  <p>Prototip sürüm. Marka adları yalnızca fikri göstermek içindir; gösterilen indirimler ve kupon kodları gerçek değildir. Veriler bu tarayıcıda saklanır; gerçek yayında doğrulama, kupon ve süre kontrolü sunucuda yapılmalıdır.</p>
+  <div class="foot-links"><a href="#/nasil">Nasıl çalışır</a><a href="#/panel">Kupon takip</a><a href="#/marka-kasasi">Marka kasası</a></div>
+  <p>Prototip sürüm. Marka adları yalnızca fikri göstermek içindir; gösterilen indirimler ve kupon kodları gerçek değildir. Veriler bu tarayıcıda saklanır; canlıda doğrulama, kupon ve süre kontrolü sunucuda yapılır.</p>
 </footer>
+<nav class="tabbar" aria-label="Alt menü">
+  <a href="#/" data-nav="home"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a7 7 0 0 0 7-7c0-4-3-6-4-10-2 2-3 4-3 6-1-1-2-2-2-4-3 3-5 5-5 8a7 7 0 0 0 7 7Z"/></svg>Fırsatlar</a>
+  <a href="#/kuponlarim" data-nav="coupons"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4Z M14 7v10"/></svg>Kuponlar<span class="count" data-count-coupons hidden></span></a>
+  <a href="#/profil" data-nav="profile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z M3 7l12-4 2 4 M16 13.5h2"/></svg>Kazancım</a>
+  <a href="#/nasil" data-nav="how"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18 M12 11v6 M12 7.5v.5"/></svg>Nasıl?</a>
+  <a href="#/panel" data-nav="panel"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10 M10 20V4 M16 20v-7 M22 20H2"/></svg>Takip</a>
+</nav>
 <div id="modalRoot"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="markalar.js"></script>
 <script src="logos/manifest.js"></script>
 <script src="data.js"></script>
+<script src="kurallar.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

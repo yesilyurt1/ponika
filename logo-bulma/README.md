@@ -5,8 +5,10 @@ Saat başı açılan marka kampanyalarında logoyu 5 saniyede bulana indirim kup
 - **Analiz, kararlar ve öneriler:** [ANALIZ.md](ANALIZ.md)
 - **Marka entegrasyonu ve komisyon kontrolü:** [ENTEGRASYON.md](ENTEGRASYON.md)
 - **Sunucu (API):** `server/server.mjs`, bağımlılık gerektirmez (Node 20+)
-- **Marka kütüphanesi:** `markalar.js` (15 kategori, 1.208 marka); logolar `logos/`, indirme betiği `tools/logo-indir.mjs`
-- **Veri:** `data.js`, `logo_bulma.xlsx` dosyasından üretildi (72 kampanya)
+- **Ortak kurallar:** `kurallar.js` (program, logo havuzu ≥300, çoklu indirim, telafi, günlük hak); site ve sunucu aynı dosyayı kullanır
+- **Marka kütüphanesi:** `markalar.js` (15 kategori, 1.003 benzersiz marka); logolar `logos/`, indirme betiği `tools/logo-indir.mjs`
+- **Uygulama olarak yükleme (PWA):** `manifest.webmanifest`, `sw.js`, `icons/`
+- **Veri:** `data.js`, `logo_bulma.xlsx` dosyasından üretildi (72 kampanya; diğer kategoriler ve demolar `kurallar.js`'de üretilir)
 - **Uygulama:** `index.html`, `styles.css`, `app.js` (kurulum gerektirmez)
 
 ## Çalıştırma
@@ -15,7 +17,7 @@ Saat başı açılan marka kampanyalarında logoyu 5 saniyede bulana indirim kup
 npx http-server logo-bulma -p 8765   # sonra http://localhost:8765
 ```
 
-Civil demo kampanyası günün her saati açıktır. Diğer kampanyaları hemen denemek için **Kupon takip → Test araçları → Demo saati**. Kazandığın kuponu **Marka kasası** ekranında kullanıp komisyonun **Kupon takip**'e düştüğünü görebilirsin.
+Her kategoride bir demo kampanya günün her saati açıktır (Giyim: Civil, Büyük Fırsat: Muhteşem Fırsat). Diğer kampanyaları hemen denemek için **Kupon takip → Test araçları → Demo saati**. Kazandığın kuponu **Marka kasası** ekranında kullanıp komisyonun **Kupon takip**'e düştüğünü görebilirsin.
 
 Sunucuyla (siteyi de sunar):
 
@@ -31,4 +33,4 @@ node logo-bulma/tests/e2e.mjs        # Playwright gerekir
 node --test logo-bulma/server/test.mjs   # sunucu: imza, sipariş, iade, rapor
 ```
 
-Testler; giriş, kazanma, yanlış logo, süre dolması, oyundan kaçma, kontenjan dolması, kampanya bitişi, kupon kopyalama, UTM linki, 24 saatlik kupon süresi, %3 komisyon, CSV, mobil yerleşim ve konsol hatalarını kontrol eder.
+Site testleri; kurallar penceresi, kazanma, günlük hak, telafi (düşük/reklam/ücretli), Muhteşem Fırsat tahtası, filtreler, çoklu indirim, komisyon, iade, Kazancım, hatırlatma bildirimi, kupon süresi ve 5 ekran boyutunda açık/koyu tema yerleşimini kontrol eder.

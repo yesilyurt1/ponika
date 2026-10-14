@@ -10,7 +10,7 @@ Bu belge Excel'deki fikri inceler. Verideki hataları, eksik kuralları ve siten
 | Kupon kodu | **Kişiye özel, tek kullanımlık** | `CIV-7KQ2MX` biçiminde; prototipte `DEMO-` ön ekli |
 | %3 komisyon | Markanın sitesinde kullanılan kodu kontrol edebilmek | Markanın sitesi kodu bizden doğrular ve siparişi imzalı istekle bildirir. Ayrıntılar `ENTEGRASYON.md`'de, kod `server/` klasöründe. |
 | Logolar | Orijinal logolar kullanılacak, hukuki süreç platformda | Marka kütüphanesi `markalar.js` (1.208 marka). Logo dosyaları `tools/logo-indir.mjs` ile toplanır. |
-| Oyun tahtası | Kategoride çok marka var | Her oyunda kütüphaneden rastgele 24 logo gelir, hedef her zaman içindedir |
+| Oyun tahtası | Kategoride çok marka var | Her oyunda havuzdan rastgele **30 logo** gelir, hedef her zaman içindedir (2. turda 24'ten 30'a çıktı) |
 
 ### Marka kütüphanesi
 Hedef kategori başına 200 bilinen markaydı. Yalnızca Türkiye'de bilinen, var olduğu kesin markalar yazıldı; sayıyı doldurmak için uydurma marka eklenmedi.
@@ -35,6 +35,52 @@ Hedef kategori başına 200 bilinen markaydı. Yalnızca Türkiye'de bilinen, va
 
 - **Listeyi markalar onaylamalı.** Liste markalarla sözleşme yapıldıkça güncellenmeli. Oyunda bir logonun çeldirici olarak görünmesi de o markanın logosunu kullanmak demektir.
 - **Logo dosyaları henüz yok.** Bu çalışma ortamının ağ politikası logo servislerine erişimi kapattığı için indirilemedi. Ağ açılınca `LOGO_DEV_TOKEN=… node tools/logo-indir.mjs` alan adı bilinen markaların logolarını indirir. Markanın kendi verdiği dosyalar `logos/elle/` klasörüne konur. Eksik kalanlar `logos/eksik.csv` dosyasına yazılır.
+
+## 0.1 İkinci tur kararları ve uygulaması
+
+| İstek | Uygulama |
+|---|---|
+| Canlı, hareketli, göz alıcı tasarım | Gece neonu teması: koyu zemin, pembe→turuncu→sarı geçişler, kategori başına renk ve SVG ikon, kayan marka şeridi, canlı nabız rozetleri, parlayan CTA'lar, kazanınca konfeti. Açık tema da aynı canlılıkta. Hareket azaltma ayarı açık olanlarda animasyonlar kapanır. |
+| Oyun kuralları pop-up / detay sayfası; Detay ve Başla yan yana | Her kartta **Detay** ve **Başla** yan yana. Başla'ya basınca kurallar penceresi açılır, "Hazırım"dan sonra 3-2-1 sayılır. Detay sayfasında kampanya koşulları ve oyun kuralları ayrı ayrı yazılı. |
+| Tüm kategorileri aktif et; her kategoride en az 300 logo | 15 kategorinin hepsinde 24 saatlik program var (375 kampanya). Her kategorinin oyun havuzu en az 300 logo. Kategoride 300 bilinen marka yoksa havuz uydurma isimle değil, diğer sektörlerin gerçek markalarıyla tamamlanır. "Jack Jones" / "Jack & Jones" gibi ikiz yazımlar tek marka sayılır. |
+| Tüm ekranları kontrol et | Android 360, iPhone 390, iPhone SE 375, tablet 768 ve masaüstü 1440 genişliğinde, açık ve koyu temada 8 sayfa otomatik test edilir. Telefonda alt menüyle uygulama gibi çalışır, ana ekrana yüklenebilir (PWA). |
+| Kuponları kaydet, zamanı gelince push/SMS | Yaklaşan kampanyada **Hatırlat**: 5 dk kala ve başladığında bildirim. Kupon bitmeden 1 saat önce de bildirim gelir. Bildirim merkezi (zil) ve profilde kanal ayarları var. Sunucuda SMS sağlayıcısına bağlanan zamanlayıcı hazır (`ENTEGRASYON.md` §5). |
+| Profilin yanındaki sayaç | Türkiye saatini gösteriyordu. Artık **"Sıradaki 16:00 · 00:12:34"** biçiminde, bir sonraki saat başı kampanyalarına kalan süreyi gösteriyor. |
+| Başlangıç ve bitiş sayaçları; her kategoriden bir aktif kampanya | Yaklaşan kartlarda "Başlamasına", canlılarda "Bitmesine" sayacı ve ilerleme çubuğu var. Her kategoride günün her saati açık bir demo kampanya bulunuyor (Giyim: Civil). |
+| Muhteşem Fırsat | Büyük Fırsat kategorisinde (demo + 12:00 ve 20:00). Ana sayfada fosforlu sarı-yeşil, hareketli çizgili şeritte gösterilir. Oyunda tüm logolar bordo/siyah ve aynı yazı tipinde; koşullarda ve kurallar penceresinde bu açıkça yazılı. |
+| Filtreler | Aktif, Yaklaşan, Kazandıklarım, Kazanamadıklarım, Sona eren, Hatırlatmalarım + kategori çipleri. Liste 24'erli sayfalanır. |
+| Çoklu indirim koşulu | Her kampanyada temel oran + **yeni üye eki** (ilk kuponda +%5) + **tutar baremi** (ör. 1.000 ₺ üstü %25, 2.500 ₺ üstü %30). Marka kasasında döküm gösterilir. Komisyon indirim sonrası ödenen tutardan hesaplanır. |
+| Telafi kuponu | Kaybedene üç seçenek: daha düşük indirim (ücretsiz), reklam izle (15 sn), 5 ₺ öde (tam indirim). Günde bir kez; kontenjandan düşmez. |
+| Kazancım | Profilde toplam kazanılan indirim tutarı, kupon sayıları ve alışveriş toplamı. Telefonda alt menüde "Kazancım" sekmesi. |
+| Günlük bir kupon hakkı | Bir kupon kazanınca o gün diğer kampanyaların Başla düğmesi kilitlenir; hak gece yarısı yenilenir. |
+| Nasıl çalışır ve kupon metinleri | İstenen metinlerle güncellendi (kampanya süresi, kupon sayısı, günlük hak, pazaryeri linkleri, seçili ürünler). |
+
+### Dikkat edilmesi gereken yeni riskler
+- **Ücretli telafi:** Para ödeyip kupon almak bir satıştır, şans oyunu değildir; ödeme ve iade koşulları Mesafeli Satışlar Yönetmeliği'ne uygun yazılmalı. Ödeme bir ödeme kuruluşu (iyzico, PayTR vb.) üzerinden alınmalı.
+- **Reklamlı telafi:** Reklam envanteri bir reklam ağı (ör. Google Ad Manager) ya da markaların sponsorluğuyla doldurulur. Prototipteki reklam ekranı yer tutucudur.
+- **SMS:** Ticari SMS için İYS'de alıcı onayı şart. Kayıt formundaki onay metni bunu kapsıyor, ama gönderimden önce İYS sorgusu da yapılmalı.
+- **Günlük tek kupon:** Kullanıcı birden fazla hesap açarak bu kuralı aşmaya çalışabilir. Telefonla SMS doğrulaması bu yüzden canlıda zorunlu.
+
+## 0.2 Bu tarzda bir site var mı?
+
+Yapılan aramada **saat başı marka kampanyası + logoyu 5 saniyede bulma + kontenjanlı kişiye özel kupon** birleşimini yapan bir site ya da uygulama bulunamadı. Fikrin parçaları ayrı ayrı var:
+
+| Örnek | Benzerlik | Fark |
+|---|---|---|
+| Trendyol "Kazandıran Çark" | Her gün belli bir saatte (20:00) oyunla kupon kazanma | Şansa dayalı çark; beceri yok, tek marka (Trendyol) |
+| Trendyol "Her Gün Gel Kazan" | Günlük ziyaretle kupon | Oyun yok |
+| Temo | Çark çevirerek kupon | Şansa dayalı |
+| Kazan Kazan | Oyun oynayıp puan toplayıp 200'den fazla markada harcama | Puan sistemi; anlık marka kampanyası yok |
+| Logo Logo (eski mobil oyun) | Logo tahmin oyunu | Ödül/kupon yok |
+| Liquid Barcodes "gamified couponing" | Süre ve adet sınırlı, oyunlaştırılmış kuponlar (markalara satılan altyapı) | Tüketiciye dönük bir platform değil, markanın kendi uygulamasına kurulan araç |
+| Shopify/Wix/WooCommerce kupon oyunları (XOX, hafıza kartı) | Oyunu kazanana indirim kodu | Tek mağazanın kendi sitesinde; çok markalı, saat başı yarış yok |
+
+**Değerlendirme:**
+- Türkiye'de oyunla kupon veren örnekler hep tek bir pazaryerinin içinde ve **şansa** dayalı.
+- "Çok markalı, saat başı, beceriye dayalı, kontenjanlı" kurgu farklılaşma noktası.
+- Beceriye dayalı olması, çekiliş mevzuatı açısından da şans oyunlarından daha savunulabilir bir konum sağlar (yine de hukuk görüşü alınmalı).
+
+Kaynaklar: [Hürriyet – Trendyol Kazandıran Çark](https://www.hurriyet.com.tr/advertorial/trendyol-musterilerinin-hep-yaninda-42174479), [Kazan Kazan](https://www.tamindir.com/indir/kazan-kazan/amp/), [Logo Logo](https://www.tamindir.com/indir/logo-logo/), [Liquid Barcodes](https://liquidbarcodes.com/platform/gamification/gamified-couponing), [BL Discount Coupon Code Game (Shopify)](https://apps.shopify.com/bl-discount-coupon-code-game), [Coupontools](https://www.coupontools.com/en/digital-catch-game-coupons)
 
 ## 1. Fikrin özeti (Excel'den)
 
@@ -154,14 +200,30 @@ Excel'e göre komisyon "müşterinin yaptığı ödemeden kesilerek" platforma a
 
 ## 7. Prototipte neler var?
 
-- Türkiye saatine göre saat başı açılan, süresi ve kontenjanı dolunca otomatik kapanan kampanyalar (Excel'deki 72 kampanya)
-- Ana sayfa: şu an aktif kampanyalar, sıradaki saat, 15 kategori
-- Kategori sayfası: tüm logolar (logo duvarı) ve günün programı
-- Oyun: karışık logo duvarı, 5 saniyelik sayaç, tek hak, doğru/yanlış gösterimi
-- Kazanınca kişiye özel kupon kodu, tek dokunuşla kopyalama, 24 saatlik geçerlilik
-- Kuponlarım: kalan süre, durum (kullanılabilir / kullanıldı / süresi doldu), UTM'li marka linki
-- Kupon takip paneli: doluluk, dönüşüm, UTM tıklamaları, satış tutarı girince %3 komisyon, CSV dışa aktarma
-- Test araçları: **demo saati** (herhangi bir kampanyayı hemen denemek için) ve kontenjanı test katılımcılarıyla doldurma
-- Mobil uyumlu (24 logo iPhone SE ekranına kaydırmadan sığar), karanlık mod, klavye ile kullanım
+- **Kampanyalar:** 15 kategoride Türkiye saatine göre saat başı açılan 375 kampanya. Süre ya da kontenjan dolunca otomatik kapanır. Her kategoride her saat açık bir demo kampanya var.
+- **Ana sayfa:**
+  - Hareketli giriş bölümü, sıradaki kampanyalara büyük geri sayım, kayan marka şeridi.
+  - Muhteşem Fırsat şeridi.
+  - Kategori çipleri ve 6 durum filtresi.
+- **Kampanya kartı ve detay:**
+  - Başlangıç ya da bitiş sayacı, kalan kupon.
+  - Detay + Başla yan yana; Hatırlat, Kuponu gör, Telafi al düğmeleri.
+  - Detay sayfasında indirim koşulları, pazaryeri linkleri ve oyun kuralları.
+- **Oyun:**
+  - Kurallar penceresi → 3-2-1 → 30 logoluk tam ekran tahta ve 5 sn sayaç.
+  - Muhteşem Fırsat'ta bordo-siyah tahta.
+  - Kazanınca konfeti; kaybedince telafi seçenekleri.
+- **Kupon:**
+  - Kişiye özel kod ve kopyalama; temel + barem + yeni üye indirimi.
+  - Kampanyaya göre kullanım süresi; web sitesi ve pazaryeri linkleri (UTM'li).
+  - Kuponlarım sekmeleri: Aktif, Kullanılan, Süresi dolan.
+- **Profil:** Kazancım (toplam indirim), günlük hak, hatırlatmalar, bildirim ayarları, uygulamayı yükle.
+- **Bildirimler:** Zil ile açılan bildirim merkezi. 5 dk kala, başladı ve kupon bitiyor bildirimleri; tarayıcı bildirimi ve SMS (demo).
+- **Marka kasası (demo):** Kodu doğrulama, indirim dökümü, sipariş ve komisyon.
+- **Kupon takip paneli:** Hakediş, kontrol listesi, iade, telafi gelirleri, reklam izlenme, CSV.
+- **Sunucu (`server/`):** Bu kuralların hepsi, imzalı marka API'si ve SMS/push zamanlayıcısı.
+- **Test:** Sunucuda 12, sitede 63 otomatik kontrol; 5 ekran boyutu ve açık/koyu tema.
 
-**Prototipin sınırı:** Veriler tarayıcıda (localStorage) tutulur. Her tarayıcı kendi dünyasını görür; gerçek bir yarış yoktur. Canlıya çıkmak için Bölüm 6'daki 2. ve 3. madde şarttır.
+**Prototipin sınırları:**
+- **Veriler tarayıcıda tutuluyor.** Her tarayıcı kendi dünyasını görür; kullanıcılar arasında gerçek bir yarış yoktur.
+- **Bağlanması gerekenler:** Canlıya çıkmak için site sunucuya bağlanmalı. SMS doğrulama, ödeme kuruluşu ve gerçek logolar da eklenmeli (Bölüm 6 ve `ENTEGRASYON.md` §7).
