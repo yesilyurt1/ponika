@@ -1,0 +1,8 @@
+.git
+.env
+server/data
+tests
+tools
+logos/eksik.csv
+*.md
+deploy

@@ -1,0 +1,8 @@
+# HTTPS sertifikası Let's Encrypt'ten otomatik alınır ve yenilenir.
+{$DOMAIN}, www.{$DOMAIN} {
+	@www host www.{$DOMAIN}
+	redir @www https://{$DOMAIN}{uri} permanent
+	encode zstd gzip
+	reverse_proxy app:8080
+	header Strict-Transport-Security "max-age=31536000; includeSubDomains"
+}

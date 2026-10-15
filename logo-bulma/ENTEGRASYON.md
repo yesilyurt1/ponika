@@ -5,7 +5,7 @@ Bu belge üç okuyucu içindir:
 - **Markanın yazılım ekibi:** Sitesine hangi çağrıları ekleyeceğini anlatır.
 - **Uygulama geliştiricisi:** Sitenin sunucuya nasıl bağlanacağını anlatır.
 
-Kodun tamamı `server/server.mjs` dosyasında, testleri `server/test.mjs` dosyasında. İş kuralları (indirim, telafi, günlük hak) `kurallar.js` içinde; site ve sunucu aynı dosyayı kullanır.
+Kodun tamamı `server/server.mjs` dosyasında, testleri `server/test.mjs` dosyasında. İş kuralları (program, indirim, telafi, tahta boyutu) `kurallar.js` içinde; site ve sunucu aynı dosyayı kullanır.
 
 ## 1. Akış
 
@@ -37,6 +37,8 @@ Kullanıcı ödemeyi tamamlar
 | **İmzalı istekler** | Her marka isteği markanın gizli anahtarıyla imzalanır (HMAC-SHA256) ve 5 dakika geçerlidir. Başkası marka adına sipariş ya da iade bildiremez. |
 | **Tekrar sayılmaz** | Aynı sipariş numarası ikinci kez gelirse komisyon iki kez yazılmaz; başka bir kodla gelirse reddedilir. |
 | **İşlem kaydı** | Her doğrulama, sipariş ve iade zaman damgasıyla saklanır; anlaşmazlıkta delil olur. |
+| **UTM'li yönlendirme linki** | Kupondaki "Trendyol'da kullan / Web sitesinde kullan" düğmesi `https://alanadin/r/KOD/0` adresine gider. Sunucu tıklamayı (kod, zaman) kaydeder ve müşteriyi `utm_source=1milyonuncumarka&utm_medium=kupon&utm_content=KOD` ekli marka linkine yönlendirir. Marka kendi Google Analytics'inde bu trafiği ve satışları görür; sen de yönetim panelinde "Linke tıkladı" adımını görürsün. |
+| **Yönetim paneli** | `/#/admin` (anahtarla girilir): Özet, Üyeler, Kuponlar, Satın alma takibi (huni: kupon kazandı → linke tıkladı → kasada doğrulandı → satın aldı), Hatırlatmalar, Gönderilen bildirimler, Kampanyalar, Logolar, Kasa simülatörü, Markalar. Kupon iptal/uzat/iade, elle "kullanıldı" işaretleme, üye engelleme/silme (KVKK), tek kişiye ya da kampanyanın hatırlatma listesine SMS gönderme ve CSV dışa aktarma buradan yapılır. |
 | **Aylık rapor ve CSV** | `GET /api/admin/rapor?ay=2026-10` ve `GET /api/admin/kuponlar.csv?ay=2026-10` marka başına sepet, indirim, ödenen tutar, iade ve komisyonu verir. Telafi ödemeleri ve reklam izlenmeleri de raporda. |
 
 > **Sözleşmeye girmesi gerekenler:** Teknik kontrol tek başına yetmez. Sözleşmede şunlar yazmalı:
@@ -54,15 +56,15 @@ Pazaryerlerinde siparişi platforma marka bildiremez, çünkü ödeme sayfası p
 
 ## 3. Platform tarafı: kurulum
 
+Canlı kurulum adım adım [CANLIYA-ALMA.md](CANLIYA-ALMA.md)'de. Yerelde denemek için:
+
 ```bash
-ADMIN_KEY=uzun-rastgele-bir-sifre PORT=8080 node logo-bulma/server/server.mjs
-# İsteğe bağlı:
-#   SMS_WEBHOOK_URL=https://sms-saglayici/gonder   SMS sağlayıcısının ağ geçidi ({to, message} alır)
-#   PAYMENT_MODE=demo                              Ücretli telafiyi ödeme doğrulamadan kabul et (yalnız test)
-#   COMMISSION=0.03                                Komisyon oranı
+ADMIN_KEY=uzun-rastgele-bir-sifre SMS_MODE=dev PAYMENT_MODE=demo node logo-bulma/server/server.mjs
+# SMS_MODE=dev  giriş kodunu ekranda gösterir (yalnız test). Canlıda: netgsm ya da webhook.
+# PAYMENT_MODE=demo  ücretli telafiyi ödeme doğrulamadan kabul eder (yalnız test). Canlıda: off (seçenek gizlenir).
 ```
 
-Marka için anahtar oluştur. Marka adı, kampanyadaki adla birebir aynı olmalı:
+Marka için anahtar oluştur (yönetim paneli › Markalar ya da API ile). Marka adı, kampanyadaki adla birebir aynı olmalı:
 
 ```bash
 curl -X POST http://localhost:8080/api/admin/marka \
@@ -160,13 +162,15 @@ Kullanıcı uç noktaları `Authorization: Bearer <token>` ister. Token `POST /a
 
 | Uç nokta | Görev |
 |---|---|
-| `POST /api/giris` `{ad, telefon, kvkkOnay}` | Oturum açar. Canlıda araya SMS ile tek kullanımlık kod adımı eklenmeli. |
+| `POST /api/giris/kod` `{telefon}` | Telefona 6 haneli kod SMS'i gider (5 dk geçerli; aynı numaraya dakikada bir, IP başına 10 dakikada 5 istek). |
+| `POST /api/giris` `{ad, telefon, kod, kvkkOnay}` | Kod doğruysa oturum açar (90 gün). En fazla 5 hatalı deneme. |
+| `GET /api/durum` | Sunucu saati, kampanya sayaçları, oturumdaki kullanıcının kupon/deneme/hatırlatma/bildirimleri. Site 15 sn'de bir çağırır. |
 | `GET /api/kampanyalar` | Tüm kampanyalar: durum, kalan kupon, indirim koşulları, Muhteşem Fırsat işareti, linkler |
-| `POST /api/oyun/basla` `{kampanya}` | 30 logoluk tahta gelir (yalnızca anlamsız tokenler). Tek hak ve günlük kupon hakkı burada denetlenir. |
-| `POST /api/oyun/sec` `{deneme, token}` | Sonuç ve kupon döner. Kaybedene telafi seçenekleri de döner. |
+| `POST /api/oyun/basla` `{kampanya, boyut}` | 30 logoluk tahta gelir (Muhteşem Fırsat'ta ekrana göre 50 ya da 55; yalnızca anlamsız tokenler). Her kampanyada tek oyun hakkı burada denetlenir; kupon kazanma hakkı sınırsızdır. |
+| `POST /api/oyun/sec` `{deneme, token}` | Sonuç ve kupon döner. Kaybedene aranan logonun yeri (neonla gösterilir) ve telafi seçenekleri döner. |
 | `POST /api/reklam/basla` `{deneme}` | Reklamlı telafi için reklam başlar. Sunucu süreyi kendisi ölçer. |
-| `POST /api/oyun/telafi` `{deneme, tur, reklamId?, odemeRef?}` | `tur`: `dusuk`, `reklam` ya da `ucretli`. Günde bir kez. |
-| `GET /api/kuponlarim` · `GET /api/profil` | Kuponlar; Kazancım (toplam indirim), günlük hak, bildirim ayarları |
+| `POST /api/oyun/telafi` `{deneme, tur, reklamId?, odemeRef?}` | `tur`: `dusuk`, `reklam` ya da `ucretli`. Her kampanyada bir kez. |
+| `GET /api/kuponlarim` · `GET /api/profil` | Kuponlar; Kazancım (toplam indirim), bildirim ayarları |
 | `POST /api/hatirlatma` `{kampanya}` | Hatırlatmayı açar ya da kapatır |
 | `POST /api/bildirim-ayarlari` | `{push, sms, before5, onStart, expiry}` |
 | `POST /api/push-abonelik` `{abonelik}` | Tarayıcının PushSubscription nesnesini kaydeder |
@@ -179,7 +183,7 @@ Zamanlayıcı her 30 saniyede çalışır ve üç durumda bildirim gönderir:
 - Kuponun bitmesine **1 saat kala**.
 
 Kanallar:
-- **SMS:** `SMS_WEBHOOK_URL` tanımlıysa sağlayıcıya gider (Netgsm, İleti Merkezi vb.). Tanımlı değilse mesaj giden kutusuna yazılır. SMS yalnızca KVKK/İYS onayı olan kullanıcıya gönderilir. Canlıda numaranın İYS'de kayıtlı izni de sorgulanmalı.
+- **SMS:** `SMS_MODE=netgsm` ile doğrudan Netgsm'e gider (`NETGSM_USER`, `NETGSM_PASS`, `NETGSM_HEADER`). Başka sağlayıcı (İleti Merkezi, Mutlucell vb.) için `SMS_MODE=webhook` + `SMS_WEBHOOK_URL` (`{to, message}` alan küçük bir ara servis). İkisi de yoksa mesaj giden kutusuna yazılır ve SMS ile giriş kapalı kalır. SMS yalnızca KVKK/İYS onayı olan kullanıcıya gönderilir. Canlıda numaranın İYS'de kayıtlı izni de sorgulanmalı.
 - **Push:** Tarayıcı aboneliği kaydedilir. Gönderim için VAPID anahtarları üretilmeli ve `web-push` kütüphanesi `deliver()` fonksiyonuna eklenmeli. Mobil uygulamada bu iş Firebase Cloud Messaging ile yapılır. `sw.js` içindeki `push` olayı bildirimi gösterir.
 
 ### Telafi kuponu
@@ -193,8 +197,8 @@ Kaybeden kullanıcıya üç seçenek sunulur:
 | 5 ₺ öde | Tam oran | Ödeme kuruluşu üzerinden |
 
 - Oranlar `data.js` içindeki `telafi` ayarından gelir.
-- Telafi kuponu kampanya kontenjanından düşmez.
-- **Ücretli seçenek:** `verifyPayment()` adaptörü canlıda iyzico, PayTR gibi bir ödeme kuruluşunun sonucunu sunucudan sorgulamalı. `PAYMENT_MODE=demo` yalnız test içindir.
+- Telafi kuponu kampanya kontenjanından düşmez. Her kampanyada bir kez alınabilir.
+- **Ücretli seçenek:** `verifyPayment()` adaptörü canlıda iyzico, PayTR gibi bir ödeme kuruluşunun sonucunu sunucudan sorgulamalı. Bağlanana kadar `PAYMENT_MODE=off` kalır ve "5 ₺ öde" seçeneği sitede gösterilmez. `PAYMENT_MODE=demo` yalnız test içindir.
 
 ## 6. Entegre olamayan markalar
 
@@ -210,8 +214,9 @@ Küçük markalar API kuramıyorsa iki seçenek var:
 
 ## 7. Canlıya çıkmadan önce
 
-- **Veritabanı:** Veriler şu an tek bir JSON dosyasında. PostgreSQL'e taşınmalı. Kontenjan ve günlük hak sayaçları tek işlemde kilitlenmeli (`SELECT … FOR UPDATE`) ya da Redis'te tutulmalı.
-- **Giriş:** SMS ile tek kullanımlık kod adımı eklenmeli (`/api/giris` içinde işaretli yer).
-- **Bağlantılar:** SMS sağlayıcısı, ödeme kuruluşu ve Web Push için VAPID anahtarları bağlanmalı.
-- **Güvenlik:** HTTPS ve istek sınırlama (rate limit) gerekli. Gizli anahtarlar bir anahtar kasasında saklanmalı.
-- **Site–sunucu bağlantısı:** Site şu an veriyi tarayıcıda tutuyor. `app.js` içindeki `Api` bölümü bu belgedeki uç noktalara bağlanmalı; kurallar iki tarafta zaten aynı.
+Hazır olanlar: SMS kodlu giriş, istek sınırlama, güvenlik başlıkları (CSP, HSTS), HTTPS (Caddy), oturum anahtarlarının özetlenerek saklanması, günlük otomatik yedek, site–sunucu bağlantısı ve yönetim paneli. Kurulum: [CANLIYA-ALMA.md](CANLIYA-ALMA.md).
+
+Büyüdükçe yapılacaklar:
+- **Veritabanı:** Veriler tek bir JSON dosyasında (atomik yazma + günlük yedek). Tek sunucuda on binlerce kullanıcıya yeter; daha fazlası ya da birden çok sunucu için PostgreSQL'e taşınmalı.
+- **Ödeme ve push:** Ödeme kuruluşu (`verifyPayment`) ve Web Push için VAPID anahtarları bağlanmalı.
+- **İYS:** Hatırlatma SMS'leri ticari ileti sayılabilir; gönderimden önce İYS izni sorgulanmalı. Giriş kodu SMS'i bilgilendirme amaçlıdır.

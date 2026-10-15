@@ -8,9 +8,27 @@ window.LB_DATA = {
   commissionRate: 0.03,
   timeZone: "Europe/Istanbul",
   boardSize: 30,                // oyunda tek seferde gösterilen logo (hedef dahil)
+  boardSizeMf: 55,              // Muhteşem Fırsat tahtası: ekrana sığdığı kadar, 50-55 arası
+  boardSizeMfMin: 50,
   minPool: 300,                 // her kategoride oyuna giren en az logo sayısı
-  dailyWinLimit: 1,             // müşteri başına günlük kupon kazanım hakkı
-  dailyTelafiLimit: 1,          // günlük telafi kuponu hakkı
+  maxDurationMin: 180,          // bir kampanya en fazla 3 saat sürer
+  // Kupon hakkı sınırsızdır; müşteri her kampanyada yalnızca bir kez oynayabilir (telafi de kampanya başına bir kez).
+  // Excel dışındaki kategorilerin programı: her kaç dakikada bir, ilk başlangıç dakikası, sırayla kullanılan süreler (dk).
+  // mf: Muhteşem Fırsat olan başlangıç dakikaları.
+  schedules: {
+    elektronik:{every:30, offset:10, durations:[20, 45, 60, 90, 120, 180]},
+    gozluk:{every:60, offset:20, durations:[30, 60, 90]},
+    canta:{every:15, offset:5, durations:[15, 30, 45, 60]},
+    supermarket:{every:30, offset:0, durations:[30, 60, 120]},
+    saat:{every:60, offset:40, durations:[45, 90, 180]},
+    bijuteri:{every:60, offset:15, durations:[30, 60]},
+    kozmetik:{every:15, offset:10, durations:[15, 30, 60, 90]},
+    cicek:{every:60, offset:30, durations:[60, 120]},
+    yemek:{every:30, offset:15, durations:[30, 45, 90]},
+    saglik:{every:60, offset:50, durations:[60, 180]},
+    "cafe-hastane":{every:30, offset:20, durations:[30, 60]},
+    "buyuk-firsat":{every:60, offset:45, durations:[60, 120, 180], mf:[705, 1185]}
+  },
   newMemberBonus: 5,            // ilk kuponunu kazanan yeni üyeye ek indirim (puan)
   telafi: {lowShare: 0.4, adShare: 0.6, paidShare: 1, fee: 5, adSec: 15},
   // Kategoriler: renk (kart ve ikon vurgusu) ve ikon anahtarı (app.js içindeki SVG seti)

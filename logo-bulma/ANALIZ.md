@@ -50,16 +50,33 @@ Hedef kategori başına 200 bilinen markaydı. Yalnızca Türkiye'de bilinen, va
 | Muhteşem Fırsat | Büyük Fırsat kategorisinde (demo + 12:00 ve 20:00). Ana sayfada fosforlu sarı-yeşil, hareketli çizgili şeritte gösterilir. Oyunda tüm logolar bordo/siyah ve aynı yazı tipinde; koşullarda ve kurallar penceresinde bu açıkça yazılı. |
 | Filtreler | Aktif, Yaklaşan, Kazandıklarım, Kazanamadıklarım, Sona eren, Hatırlatmalarım + kategori çipleri. Liste 24'erli sayfalanır. |
 | Çoklu indirim koşulu | Her kampanyada temel oran + **yeni üye eki** (ilk kuponda +%5) + **tutar baremi** (ör. 1.000 ₺ üstü %25, 2.500 ₺ üstü %30). Marka kasasında döküm gösterilir. Komisyon indirim sonrası ödenen tutardan hesaplanır. |
-| Telafi kuponu | Kaybedene üç seçenek: daha düşük indirim (ücretsiz), reklam izle (15 sn), 5 ₺ öde (tam indirim). Günde bir kez; kontenjandan düşmez. |
+| Telafi kuponu | Kaybedene üç seçenek: daha düşük indirim (ücretsiz), reklam izle (15 sn), 5 ₺ öde (tam indirim). Kampanya başına bir kez; kontenjandan düşmez. |
 | Kazancım | Profilde toplam kazanılan indirim tutarı, kupon sayıları ve alışveriş toplamı. Telefonda alt menüde "Kazancım" sekmesi. |
-| Günlük bir kupon hakkı | Bir kupon kazanınca o gün diğer kampanyaların Başla düğmesi kilitlenir; hak gece yarısı yenilenir. |
+| Günlük bir kupon hakkı | Üçüncü turda kaldırıldı (bkz. 0.15): kupon hakkı sınırsız, her kampanyada tek oyun. |
 | Nasıl çalışır ve kupon metinleri | İstenen metinlerle güncellendi (kampanya süresi, kupon sayısı, günlük hak, pazaryeri linkleri, seçili ürünler). |
 
 ### Dikkat edilmesi gereken yeni riskler
 - **Ücretli telafi:** Para ödeyip kupon almak bir satıştır, şans oyunu değildir; ödeme ve iade koşulları Mesafeli Satışlar Yönetmeliği'ne uygun yazılmalı. Ödeme bir ödeme kuruluşu (iyzico, PayTR vb.) üzerinden alınmalı.
 - **Reklamlı telafi:** Reklam envanteri bir reklam ağı (ör. Google Ad Manager) ya da markaların sponsorluğuyla doldurulur. Prototipteki reklam ekranı yer tutucudur.
 - **SMS:** Ticari SMS için İYS'de alıcı onayı şart. Kayıt formundaki onay metni bunu kapsıyor, ama gönderimden önce İYS sorgusu da yapılmalı.
-- **Günlük tek kupon:** Kullanıcı birden fazla hesap açarak bu kuralı aşmaya çalışabilir. Telefonla SMS doğrulaması bu yüzden canlıda zorunlu.
+- **Kampanya başına tek oyun:** Kullanıcı birden fazla hesap açarak bu kuralı aşmaya çalışabilir. Telefonla SMS doğrulaması bu yüzden canlıda zorunlu (uygulandı).
+
+## 0.15 Üçüncü tur kararları (yeni_revize.docx)
+
+| İstek | Uygulama |
+|---|---|
+| Kategorilere farklı başlangıç saatleri; 15/30/60 dk aralıklar; kampanya en çok 3 saat | Her kategorinin kendi programı var (ör. Elektronik 30 dk'da bir :10'da, Çanta 15 dk'da bir, Saat saat başı :40'ta). Her kampanyanın süresi en çok 180 dk; sayaç bu süreye göre işler. Toplam 615 kampanya. |
+| Sayaç yalnız başlangıç saati olan kampanyada | Demo kampanyalarda başlangıç saati yok: "Başlangıç saati yok · Tüm gün açık" yazar, sayaç çalışmaz. Diğerlerinde "16:10'da başlıyor · 45 dk sürecek" ve "Bitmesine (16:55)". |
+| Kampanyalar altında arama | Kategori, marka ve ürün arar; Türkçe eklere dayanıklı ("bebek bezi" → "Bebek bezlerinde", "güneş gözlüğü", "ayakkabılar"). |
+| Markanın altında kampanya açıklaması | Her kartta "Civil · Bebek bezlerinde %20 indirim". Ürün, markanın türüne göre seçilir (Tat → salça/konserve, Acıbadem → check-up). |
+| Muhteşem Fırsat'ta 50–55 logo | Telefonda 50 (5 sütun), geniş ekranda 55 (11 sütun); tüm ekranlarda kaydırmadan sığdığı test edilir. Normal kampanyalar 30. |
+| Bulunamayan logoyu göster | Yanlış seçimde ya da süre dolunca aranan logo neon yeşil çerçeveyle yanıp söner; "Devam" ile (ya da 4,5 sn sonra) sonuç penceresine geçilir. |
+| Logoları kendimiz yükleyebilir miyiz? | Evet: Yönetim paneli › Logolar. PNG/SVG/WebP/JPG (≤300 KB) yüklenir, oyunda ve kartlarda hemen kullanılır. |
+| "Günlük kupon hakkın 1/1" yanlış | Kaldırıldı. Kupon hakkı sınırsız; her kampanyada yalnız bir kez oynanır. Telafi de kampanya başına bir kez. |
+| Kazanma penceresinde % iki kez yazıyordu; etiketlerde "indirim" yoktu | Büyük "%20 indirim" bir kez; etiketler "Yeni üyeye +%5 indirim", "₺1.000 üstü %25 indirim". Koşullar kampanyaya göre değişir (yalnız temel, +yeni üye, +barem ya da ikisi). |
+| "Marka kasasında kullan" ne demek? | Müşteri ekranı değildi; markanın ödeme sayfasını taklit eden bir test ekranıydı. Müşteriye artık yalnız "Trendyol'da kullan / Web sitesinde kullan" gösterilir. Simülatör yönetim paneline taşındı. |
+| Admin paneli: UTM/kod ile satın alma kontrolü, tüm kişisel veriler, aksiyon | Yönetim paneli (`/#/admin`): üyeler (ad, telefon, onay, kupon/oyun sayısı), kuponlar (kim, hangi kampanya, tıklama, kasada doğrulama, sipariş, tutar, komisyon), satın alma hunisi, hatırlatma listeleri, gönderilen bildirimler. Aksiyonlar: kupon iptal/uzat/iade, elle "kullanıldı", üye engelle/sil, SMS gönder, CSV. |
+| Canlıya alma | Sunucu siteyi de sunar; SMS kodlu giriş, Netgsm bağlantısı, Docker + Caddy (otomatik HTTPS), yedekleme. Adımlar: [CANLIYA-ALMA.md](CANLIYA-ALMA.md). |
 
 ## 0.2 Bu tarzda bir site var mı?
 
@@ -217,13 +234,12 @@ Excel'e göre komisyon "müşterinin yaptığı ödemeden kesilerek" platforma a
   - Kişiye özel kod ve kopyalama; temel + barem + yeni üye indirimi.
   - Kampanyaya göre kullanım süresi; web sitesi ve pazaryeri linkleri (UTM'li).
   - Kuponlarım sekmeleri: Aktif, Kullanılan, Süresi dolan.
-- **Profil:** Kazancım (toplam indirim), günlük hak, hatırlatmalar, bildirim ayarları, uygulamayı yükle.
+- **Profil:** Kazancım (toplam indirim), hatırlatmalar, bildirim ayarları, uygulamayı yükle.
 - **Bildirimler:** Zil ile açılan bildirim merkezi. 5 dk kala, başladı ve kupon bitiyor bildirimleri; tarayıcı bildirimi ve SMS (demo).
-- **Marka kasası (demo):** Kodu doğrulama, indirim dökümü, sipariş ve komisyon.
-- **Kupon takip paneli:** Hakediş, kontrol listesi, iade, telafi gelirleri, reklam izlenme, CSV.
-- **Sunucu (`server/`):** Bu kuralların hepsi, imzalı marka API'si ve SMS/push zamanlayıcısı.
-- **Test:** Sunucuda 12, sitede 63 otomatik kontrol; 5 ekran boyutu ve açık/koyu tema.
+- **Yönetim paneli (`/#/admin`):** Özet, üyeler, kuponlar, satın alma hunisi, hatırlatmalar, gönderilen bildirimler, kampanyalar, logo yükleme, kasa simülatörü, marka API anahtarları; iptal/uzat/iade, elle "kullanıldı", engelle/sil, SMS, CSV.
+- **Sunucu (`server/`):** Bu kuralların hepsi, SMS kodlu giriş, imzalı marka API'si, UTM yönlendirme ve SMS/push zamanlayıcısı. Site sunucudan açılınca otomatik olarak sunucuya bağlanır.
+- **Test:** Sunucuda 17, sitede 89 otomatik kontrol; 5 ekran boyutu ve açık/koyu tema.
 
-**Prototipin sınırları:**
-- **Veriler tarayıcıda tutuluyor.** Her tarayıcı kendi dünyasını görür; kullanıcılar arasında gerçek bir yarış yoktur.
-- **Bağlanması gerekenler:** Canlıya çıkmak için site sunucuya bağlanmalı. SMS doğrulama, ödeme kuruluşu ve gerçek logolar da eklenmeli (Bölüm 6 ve `ENTEGRASYON.md` §7).
+**İki çalışma biçimi:**
+- **Demo (telefon bağlantısı, statik yayın):** Veriler tarayıcıda tutulur; her tarayıcı kendi dünyasını görür. Giriş SMS'siz, kodlar DEMO- ile başlar.
+- **Canlı (sunucu):** Tüm veriler sunucuda; herkes aynı kontenjanı görür, giriş SMS koduyla. Kurulum: [CANLIYA-ALMA.md](CANLIYA-ALMA.md).

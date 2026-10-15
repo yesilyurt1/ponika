@@ -28,14 +28,13 @@
   <nav class="nav" aria-label="Ana menü">
     <a href="#/" data-nav="home">Kampanyalar</a>
     <a href="#/kuponlarim" data-nav="coupons">Kuponlarım <span class="count" data-count-coupons hidden></span></a>
+    <a href="#/profil" data-nav="profile">Kazancım</a>
     <a href="#/nasil" data-nav="how">Nasıl çalışır</a>
-    <a href="#/panel" data-nav="panel">Kupon takip</a>
-    <a href="#/marka-kasasi" data-nav="kasa">Marka kasası</a>
   </nav>
   <div class="top-right">
-    <span class="next" title="Bir sonraki saat başı kampanyalarının başlamasına kalan süre (Türkiye saati)">
+    <span class="next" title="Bir sonraki kampanyanın başlamasına kalan süre (Türkiye saati)">
       <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18 M12 7v5l3 2"/></svg>
-      <span class="next-l">Sıradaki <b id="nextAt">--:--</b></span><b id="nextCd" class="next-cd">--:--:--</b>
+      <span class="next-l">Sıradaki kampanya <b id="nextAt">--:--</b></span><b id="nextCd" class="next-cd">--:--:--</b>
     </span>
     <button class="icon-btn bell" id="notifBtn" type="button" aria-label="Bildirimler">
       <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4Z M10 21h4"/></svg>
@@ -44,24 +43,24 @@
     <button class="userbtn" id="userBtn" type="button">Giriş yap</button>
   </div>
 </header>
-<p class="proto-note">Prototip: kampanyalar ve kuponlar gerçek değildir, markalarla bir bağlantısı yoktur.</p>
+<p class="proto-note" id="protoNote">Prototip: kampanyalar ve kuponlar gerçek değildir, markalarla bir bağlantısı yoktur.</p>
 <div class="demo-banner" id="demoBanner" hidden>
   Demo saati açık: site <b id="demoTime"></b> gibi davranıyor. <button type="button" id="demoReset">Gerçek saate dön</button>
 </div>
 <main id="main" tabindex="-1"></main>
 <footer class="foot">
-  <div class="foot-links"><a href="#/nasil">Nasıl çalışır</a><a href="#/panel">Kupon takip</a><a href="#/marka-kasasi">Marka kasası</a></div>
-  <p>Prototip sürüm. Marka adları yalnızca fikri göstermek içindir; gösterilen indirimler ve kupon kodları gerçek değildir. Veriler bu tarayıcıda saklanır; canlıda doğrulama, kupon ve süre kontrolü sunucuda yapılır.</p>
+  <div class="foot-links"><a href="#/nasil">Nasıl çalışır</a><a href="#/kuponlarim">Kuponlarım</a><a href="#/admin" data-nav="admin">Yönetim paneli</a></div>
+  <p id="footNote">Prototip sürüm. Marka adları yalnızca fikri göstermek içindir; gösterilen indirimler ve kupon kodları gerçek değildir. Veriler bu tarayıcıda saklanır; canlıda doğrulama, kupon ve süre kontrolü sunucuda yapılır.</p>
 </footer>
 <nav class="tabbar" aria-label="Alt menü">
   <a href="#/" data-nav="home"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a7 7 0 0 0 7-7c0-4-3-6-4-10-2 2-3 4-3 6-1-1-2-2-2-4-3 3-5 5-5 8a7 7 0 0 0 7 7Z"/></svg>Fırsatlar</a>
   <a href="#/kuponlarim" data-nav="coupons"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4Z M14 7v10"/></svg>Kuponlar<span class="count" data-count-coupons hidden></span></a>
   <a href="#/profil" data-nav="profile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z M3 7l12-4 2 4 M16 13.5h2"/></svg>Kazancım</a>
   <a href="#/nasil" data-nav="how"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18 M12 11v6 M12 7.5v.5"/></svg>Nasıl?</a>
-  <a href="#/panel" data-nav="panel"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10 M10 20V4 M16 20v-7 M22 20H2"/></svg>Takip</a>
 </nav>
 <div id="modalRoot"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="config.js"></script>
 <script src="markalar.js"></script>
 <script src="logos/manifest.js"></script>
 <script src="data.js"></script>

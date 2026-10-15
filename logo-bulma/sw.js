@@ -1,7 +1,7 @@
 // 1 Milyonuncu Marka service worker: uygulama kabuğunu önbelleğe alır; sayfa ağdan, yoksa önbellekten gelir.
 // Canlıda Web Push bildirimleri de burada karşılanır (push olayı).
-const CACHE = "lb-v3";
-const FILES = ["./", "index.html", "styles.css", "app.js", "data.js", "kurallar.js", "markalar.js", "logos/manifest.js", "manifest.webmanifest",
+const CACHE = "lb-v5";
+const FILES = ["./", "index.html", "styles.css", "app.js", "data.js", "kurallar.js", "markalar.js", "logos/manifest.js", "config.js", "manifest.webmanifest",
   "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png", "icons/favicon-32.png"];
 self.addEventListener("install", e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())));
 self.addEventListener("activate", e => e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith("lb-") && k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())));
