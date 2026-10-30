@@ -235,6 +235,7 @@ tr.gold td.rank{color:var(--gold)}
 <body>
 
 
+<noscript><p class="sheet" style="max-width:760px;margin:16px auto">Ponika'yı oynamak için tarayıcında JavaScript'i açman gerekiyor.</p></noscript>
 <div class="app">
   <header class="top">
     <div class="brand">
@@ -242,9 +243,9 @@ tr.gold td.rank{color:var(--gold)}
       <button class="iconbtn" id="b-sound" aria-label="Sesi kapat" title="Ses">🔊</button>
     </div>
     <nav class="tabs" role="tablist">
-      <button role="tab" id="tab-home" aria-selected="true" data-view="home">Bölümler</button>
-      <button role="tab" id="tab-scores" aria-selected="false" data-view="scores">En İyiler</button>
-      <button role="tab" id="tab-guide" aria-selected="false" data-view="guide">Nasıl Oynanır</button>
+      <button role="tab" id="tab-home" aria-controls="view-home" aria-selected="true" data-view="home">Bölümler</button>
+      <button role="tab" id="tab-scores" aria-controls="view-scores" aria-selected="false" data-view="scores">En İyiler</button>
+      <button role="tab" id="tab-guide" aria-controls="view-guide" aria-selected="false" data-view="guide">Nasıl Oynanır</button>
     </nav>
   </header>
 
@@ -381,7 +382,7 @@ tr.gold td.rank{color:var(--gold)}
     <div class="unlock" id="r-unlock" hidden></div>
     <div class="mcol" id="r-actions">
       <button class="btn gold" id="r-next">Sonraki seviye</button>
-      <div class="mrow">
+      <div class="mrow" id="r-row">
         <button class="btn" id="r-retry">Tekrar oyna</button>
         <button class="btn" id="r-undo">Geri al ve devam et</button>
       </div>
@@ -423,7 +424,7 @@ tr.gold td.rank{color:var(--gold)}
   </div>
 </div>
 
-<div class="toast" id="toast" hidden></div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script>
 (function(){
@@ -446,7 +447,7 @@ tr.gold td.rank{color:var(--gold)}
   let progress=store.get("progress",{});        // id -> {stars,best,time}
   let inv=store.get("inv",{hint:0,undo:0,pro:false});
   let settings=store.get("settings",{sound:true,vib:true,test:false});
-  let S=null, cellPx=null, view="home";
+  let S=null, cellPx=null, manualZoom=false, view="home";
   let painted=new Set(), dirty=new Set(), paintedOver=false;
 
   const thresholds=P=>{const t3=P-1,t2=Math.min(Math.ceil(P*.9),t3-1),t1=Math.min(Math.ceil(P*.8),t2-1);return [t1,t2,t3]};
@@ -516,7 +517,7 @@ tr.gold td.rank{color:var(--gold)}
        freeUndo:1,freeHint:1,elapsed:0,running:false,over:false,hint:-1,saved:false,lastWarn:null};
     lv.blocks.forEach(b=>S.blocked[b]=true);
     if(lv.start!=null){S.path=[lv.start];S.grid[lv.start]=1}
-    cellPx=null;save();store.set("lastLevel",id);
+    cellPx=null;manualZoom=false;save();store.set("lastLevel",id);
     showView("game");render(true);
     $("board-wrap").scrollTo(0,0);
   }
@@ -575,14 +576,15 @@ tr.gold td.rank{color:var(--gold)}
   }
   function endGame(win){
     S.over=true;S.running=false;updateProgress();save();
+    clearTimeout(toastT);$("toast").hidden=true; // a "1 way left" warning is stale once the game ends
     if(win)sfx.win();else sfx.end();
     render();
-    setTimeout(()=>{if(S.over)showResult()},win?700:1500);
+    const g=S;setTimeout(()=>{if(S===g&&S.over&&view==="game")showResult()},win?700:1500);
   }
 
   // ---------- timer (counts only while visible and playing)
   setInterval(()=>{
-    if(S&&S.running&&!S.over&&!document.hidden&&view==="game"){S.elapsed++;$("h-time").textContent=fmt(S.elapsed);if(S.elapsed%5===0)save()}
+    if(S&&S.running&&!S.over&&!document.hidden&&view==="game"&&$("m-shop").hidden){S.elapsed++;$("h-time").textContent=fmt(S.elapsed);if(S.elapsed%5===0)save()}
   },1000);
 
   // ---------- render: game
@@ -600,7 +602,7 @@ tr.gold td.rank{color:var(--gold)}
     const th=thresholds(P),bar=$("bar"),bl=$("bar-label");
     bar.querySelectorAll(".mark").forEach(m=>m.remove());bl.innerHTML="";
     th.forEach((v,i)=>{const pct=v/P*100;const m=document.createElement("span");m.className="mark";m.style.left=pct+"%";bar.appendChild(m);
-      if(i===1)return;const s=document.createElement("span");s.style.left=pct+"%";s.style.transform=i===2?"translateX(-100%)":"translateX(-60%)";s.textContent="★".repeat(i+1)+" "+v;bl.appendChild(s)});
+      if(i===1)return;const s=document.createElement("span");s.style.left=pct+"%";s.style.transform="translateX(-100%)";s.textContent="★".repeat(i+1)+" "+v;bl.appendChild(s)});
 
     // moves indicator
     const mv=$("moves"),mt=$("moves-t");mv.className="moves";
@@ -619,7 +621,7 @@ tr.gold td.rank{color:var(--gold)}
     if(rebuild||board.children.length!==total){
       board.innerHTML="";board.style.gridTemplateColumns=`repeat(${lv.size},var(--cell))`;
       const frag=document.createDocumentFragment();
-      for(let i=0;i<total;i++){const c=document.createElement("button");c.className="cell";c.dataset.i=i;
+      for(let i=0;i<total;i++){const c=document.createElement("button");c.className="cell";c.dataset.i=i;c.tabIndex=-1;
         const x=i%lv.size,y=(i/lv.size)|0;
         if(x%5===4&&x<lv.size-1)c.classList.add("v5");if(y%5===4&&y<lv.size-1)c.classList.add("h5");
         if(S.blocked[i]){c.classList.add("blocked");c.setAttribute("aria-label","Kapalı kare")}
@@ -643,6 +645,7 @@ tr.gold td.rank{color:var(--gold)}
       c.classList.toggle("why",why.has(i));c.classList.toggle("dead",S.over&&!!v&&i!==last&&!why.has(i));
       const html=v?String(v):(isT?`<span class="nx">${n+1}</span>`:"");
       if(c.innerHTML!==html)c.innerHTML=html;
+      c.setAttribute("aria-label",`Satır ${((i/lv.size)|0)+1}, sütun ${i%lv.size+1}`+(v?`: ${v}`:isT?`: ${n+1} buraya yazılabilir`:"")+(i===S.hint?", ipucu":""));
       if(i===last||isT||i===S.hint)nextPainted.add(i);
     }
     painted=nextPainted;
@@ -660,8 +663,12 @@ tr.gold td.rank{color:var(--gold)}
     $("b-undo").disabled=n<=minLen();
     $("b-hint").disabled=!n||S.over;
     setBadge("u-badge","undo");setBadge("i-badge","hint");
+    if(!board.contains(document.activeElement))setRoving(last>=0?last:0);
     if(last>=0)scrollToCell(last);
   }
+  // one cell is in the tab order; arrow keys move between cells
+  function setRoving(i){const b=$("board"),prev=b.querySelector('.cell[tabindex="0"]'),c=b.children[i];
+    if(prev&&prev!==c)prev.tabIndex=-1;if(c)c.tabIndex=0}
   function coachText(n,P,t){
     if(S.over)return n===P?"<strong>Harika!</strong> Tüm kareleri doldurdun.":n===P-1?"<strong>Seviye tamamlandı!</strong> Sadece 1 kare boş kaldı.":"İpucu: kırmızı çerçeveli kareler, son sayından gidebileceğin ama dolu olan yerler.";
     if(S.id===1){
@@ -690,8 +697,8 @@ tr.gold td.rank{color:var(--gold)}
     $("board").style.setProperty("--cell",cellPx+"px");
     $("zoom").hidden=fit>=30;
   }
-  $("z-in").onclick=()=>{cellPx=Math.min(56,cellPx+8);sizeBoard();scrollToCell(lastCell(),true)};
-  $("z-out").onclick=()=>{const wrap=$("board-wrap"),fit=Math.floor((wrap.clientWidth-6-(S.size-1))/S.size);
+  $("z-in").onclick=()=>{manualZoom=true;cellPx=Math.min(56,cellPx+8);sizeBoard();scrollToCell(lastCell(),true)};
+  $("z-out").onclick=()=>{manualZoom=true;const wrap=$("board-wrap"),fit=Math.floor((wrap.clientWidth-6-(S.size-1))/S.size);
     cellPx=Math.max(Math.min(fit,cellPx),cellPx-8,10);sizeBoard();scrollToCell(lastCell(),true)};
   function scrollToCell(i,force){
     if(i<0)return;const c=$("board").children[i],wrap=$("board-wrap");if(!c)return;
@@ -701,6 +708,20 @@ tr.gold td.rank{color:var(--gold)}
         behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"});}
   }
   $("board").addEventListener("click",e=>{const c=e.target.closest(".cell");if(c)place(+c.dataset.i)});
+  $("board").addEventListener("keydown",e=>{
+    const c=e.target.closest(".cell");if(!c||!S)return;
+    const w=S.size,i=+c.dataset.i,x=i%w;let j=-1;
+    switch(e.key){
+      case "ArrowLeft":if(x>0)j=i-1;break;
+      case "ArrowRight":if(x<w-1)j=i+1;break;
+      case "ArrowUp":if(i>=w)j=i-w;break;
+      case "ArrowDown":if(i+w<w*w)j=i+w;break;
+      case "Home":j=i-x;break;
+      case "End":j=i-x+w-1;break;
+      default:return;
+    }
+    e.preventDefault();if(j<0)return;setRoving(j);$("board").children[j].focus();
+  });
 
   // ---------- helpers & shop
   let pending=null,adTimer=null,buyWhat=null;
@@ -711,14 +732,14 @@ tr.gold td.rank{color:var(--gold)}
     if(inv[kind]>0){inv[kind]--;store.set("inv",inv);fn();return}
     openShop(kind,fn);
   }
-  function shopPane(p){["main","ad","confirm"].forEach(k=>$("shop-"+k).hidden=k!==p)}
+  function shopPane(p){["main","ad","confirm"].forEach(k=>$("shop-"+k).hidden=k!==p);focusFirst($("m-shop"))}
   function openShop(kind,fn){
     pending={kind,fn};
     $("shop-title").textContent=kind==="undo"?"Geri alma hakkın bitti":"İpucu hakkın bitti";
     $("o-ad-sub").textContent=kind==="undo"?"+1 geri alma, ücretsiz":"+1 ipucu, ücretsiz";
-    shopPane("main");$("m-shop").hidden=false;
+    openModal("m-shop");shopPane("main");
   }
-  function closeShop(){clearInterval(adTimer);$("m-shop").hidden=true;pending=null}
+  function closeShop(){clearInterval(adTimer);closeModal("m-shop");pending=null}
   function grant(){const p=pending;closeShop();if(p){p.fn();save();render()}}
   $("shop-cancel").onclick=closeShop;
   $("o-ad").onclick=()=>{
@@ -743,7 +764,7 @@ tr.gold td.rank{color:var(--gold)}
   $("b-restart").onclick=()=>{
     if(S.path.length>minLen()&&!S.over&&Date.now()-restartAsk>3000){restartAsk=Date.now();toast("Bu oyun silinecek. Onaylamak için tekrar dokun.");return}
     restartAsk=0;newGame(S.id)};
-  $("b-back").onclick=()=>{finalize();showView("home")};
+  $("b-back").onclick=goHome;
 
   // ---------- result
   function showResult(){
@@ -762,17 +783,19 @@ tr.gold td.rank{color:var(--gold)}
     else{u.classList.add("miss");u.textContent=`Sonraki seviye için ${th[0]-n} sayı daha gerekiyordu.`}
     $("r-undo").hidden=n===P;
     $("r-undo").textContent=(inv.pro||S.freeUndo>0||inv.undo>0)?"Geri al ve devam et":"Geri al ve devam et (reklam veya paket)";
-    const canNext=hasNext&&isUnlocked(S.id+1);$("r-next").disabled=!canNext;
+    const canNext=hasNext&&isUnlocked(S.id+1);$("r-next").disabled=!canNext;$("r-next").hidden=!hasNext;
     $("r-next").textContent=canNext?`Sonraki seviye →`:"Sonraki seviye (kilitli)";
     // passed: next level is the main action; not passed: continue is the main action
-    $("r-next").className="btn "+(canNext?"gold":"primary");$("r-undo").className="btn "+(canNext?"":"gold");
-    const ra=$("r-actions");if(canNext)ra.prepend($("r-next"));else ra.prepend($("r-undo"));
-    $("m-result").hidden=false;$("m-result").scrollTop=0;
+    $("r-next").className="btn "+(canNext?"gold":"");$("r-undo").className="btn "+(canNext?"":"gold");
+    const ra=$("r-actions"),row=$("r-row"),main=canNext||$("r-undo").hidden?$("r-next"):$("r-undo");
+    ra.prepend(main);row.append($("r-retry"),main===$("r-next")?$("r-undo"):$("r-next"));
+    row.style.gridTemplateColumns=[...row.children].filter(e=>!e.hidden).length>1?"":"1fr";
+    openModal("m-result");$("m-result").scrollTop=0;
   }
-  $("r-undo").onclick=()=>{$("m-result").hidden=true;useHelper("undo",()=>{undo();toast("Devam ediyorsun.")});render()};
-  $("r-retry").onclick=()=>{$("m-result").hidden=true;newGame(S.id)};
-  $("r-next").onclick=()=>{$("m-result").hidden=true;newGame(S.id+1)};
-  $("r-close").onclick=()=>{$("m-result").hidden=true};
+  $("r-undo").onclick=()=>{closeModal("m-result");useHelper("undo",()=>{undo();toast("Devam ediyorsun.")});render()};
+  $("r-retry").onclick=()=>{closeModal("m-result");newGame(S.id)};
+  $("r-next").onclick=()=>{closeModal("m-result");newGame(S.id+1)};
+  $("r-close").onclick=()=>closeModal("m-result");
   $("endbar-b").onclick=showResult;
 
   // ---------- home
@@ -836,13 +859,13 @@ tr.gold td.rank{color:var(--gold)}
   function toggle(k){settings[k]=!settings[k];store.set("settings",settings);renderSettings();if(k==="test")toast(settings.test?"Test modu açık: tüm seviyeler açıldı.":"Test modu kapandı.")}
   $("set-sound").onclick=()=>toggle("sound");$("b-sound").onclick=()=>toggle("sound");
   $("set-vib").onclick=()=>toggle("vib");$("set-test").onclick=()=>toggle("test");
-  $("set-reset").onclick=()=>{$("m-reset").hidden=false};
-  $("reset-no").onclick=()=>{$("m-reset").hidden=true};
+  $("set-reset").onclick=()=>openModal("m-reset");
+  $("reset-no").onclick=()=>closeModal("m-reset");
   $("reset-yes").onclick=()=>{store.clear();progress={};inv={hint:0,undo:0,pro:false};settings={sound:true,vib:true,test:false};
-    $("m-reset").hidden=true;S=null;renderSettings();newGame(1);toast("İlerleme sıfırlandı.")};
+    closeModal("m-reset");S=null;renderSettings();newGame(1);toast("İlerleme sıfırlandı.")};
 
   // ---------- views
-  document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{if(view==="game")finalize();showView(b.dataset.view)});
+  document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{if(view==="game")finalize();if(b.dataset.view==="home")goHome();else showView(b.dataset.view)});
   function showView(v){
     view=v;
     const tab=v==="game"?"home":v;
@@ -852,11 +875,43 @@ tr.gold td.rank{color:var(--gold)}
     if(v==="scores")renderScores();
     if(v==="guide")renderSettings();
     if(v==="game")requestAnimationFrame(sizeBoard);
+    if(v!=="home"&&!inSub())history.pushState({ponika:"sub"},"");
   }
+  // Browser / Android back button: close the open window first, then return to the level map
+  const inSub=()=>!!(history.state&&history.state.ponika==="sub");
+  function goHome(){finalize();if(inSub())history.back();else showView("home")}
+  window.addEventListener("popstate",()=>{
+    const m=openModalEl();
+    if(m){dismissModal(m);if(view!=="home")history.pushState({ponika:"sub"},"");return}
+    if(view!=="home"){finalize();showView("home")}
+  });
+
+  // ---------- modals
+  let modalReturn=null;
+  const MODALS=["m-result","m-shop","m-reset"];
+  const openModalEl=()=>MODALS.map($).find(m=>!m.hidden)||null;
+  function focusFirst(m){const b=[...m.querySelectorAll("button")].find(b=>!b.disabled&&b.offsetParent!==null);if(b)b.focus({preventScroll:true})}
+  function openModal(id){const m=$(id);if(!m.hidden)return;modalReturn=document.activeElement;m.hidden=false;focusFirst(m)}
+  function closeModal(id){const m=$(id);if(m.hidden)return;m.hidden=true;
+    const r=modalReturn;modalReturn=null;if(r&&r.isConnected&&r.offsetParent!==null)r.focus({preventScroll:true})}
+  function dismissModal(m){if(m.id==="m-shop")closeShop();else closeModal(m.id)}
+  MODALS.forEach(id=>$(id).addEventListener("click",e=>{if(e.target===e.currentTarget)dismissModal(e.currentTarget)}));
+  document.addEventListener("keydown",e=>{
+    const m=openModalEl();if(!m)return;
+    if(e.key==="Escape"){e.preventDefault();dismissModal(m);return}
+    if(e.key==="Tab"){ // keep focus inside the open window
+      const bs=[...m.querySelectorAll("button")].filter(b=>!b.disabled&&b.offsetParent!==null);if(!bs.length)return;
+      const i=bs.indexOf(document.activeElement);
+      if(e.shiftKey&&i<=0){e.preventDefault();bs[bs.length-1].focus()}
+      else if(!e.shiftKey&&(i===-1||i===bs.length-1)){e.preventDefault();bs[0].focus()}
+    }
+  });
 
   let toastT=null;
   function toast(msg,kind,ms){const t=$("toast");t.textContent=msg;t.className="toast"+(kind?" "+kind:"");t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,ms||2800)}
-  window.addEventListener("resize",()=>{if(view==="game")sizeBoard()});
+  window.addEventListener("resize",()=>{if(view!=="game")return;if(!manualZoom)cellPx=null;sizeBoard()});
+  document.addEventListener("visibilitychange",()=>{if(document.hidden&&S)save()});
+  window.addEventListener("pagehide",()=>{if(S){finalize();save()}});
 
   // ---------- boot
   renderSettings();
