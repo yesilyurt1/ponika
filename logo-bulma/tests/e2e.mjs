@@ -59,11 +59,11 @@ const poolCounts = await page.$$eval(".cat-tile > span:last-child", s => s.map(x
 ok(poolCounts.every(n => n >= 300), `her kategoride en az 300 logo (${Math.min(...poolCounts)}+)`);
 ok(await page.locator(".ftab").count() === 6, "6 durum filtresi (aktif/yaklaşan/kazandıklarım/kazanamadıklarım/sona eren/hatırlatmalarım)");
 ok(await page.locator(".grid-cards .camp").count() >= 15, "her kategoriden en az bir aktif kampanya");
-ok(await page.locator(".mf-banner").count() >= 1 && (await text(page, ".mf-banner")).includes("bordo-siyah"), "Muhteşem Fırsat cırtlak şeritte, bordo-siyah uyarısıyla");
+ok(await page.locator(".mf-banner").count() >= 1 && (await text(page, ".mf-banner")).includes("bordo-siyah"), "Muhteşem Fırsat ayrı şeritte, bordo-siyah uyarısıyla");
 ok(/\d\d:\d\d:\d\d/.test(await page.textContent("#nextCd")), "üstte sıradaki kampanya sayacı");
 const firstCard = page.locator(".grid-cards .camp").first();
 ok(await firstCard.locator(".acts a:has-text('Detay')").count() === 1 && await firstCard.locator(".acts [data-act=start]").count() === 1, "kartta Detay ve Başla yan yana");
-ok(await firstCard.locator(".cd-v").count() === 1, "kartta geri sayım");
+ok(await firstCard.locator(".cd-i").count() === 1, "kartta süre bilgisi");
 await page.click("[data-act=catf][data-v=elektronik]");
 ok(await page.$$eval(".grid-cards .camp .camp-cat", e => e.every(x => x.textContent.startsWith("Elektronik"))), "kategori filtresi çalışıyor");
 await page.click("[data-act=catf][data-v=all]");

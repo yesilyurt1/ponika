@@ -1,38 +1,44 @@
-/* 1 Milyonuncu Marka — gece pazarı neonu: koyu zemin, sıcak pembe→turuncu→sarı enerji, kategori başına renk.
-   Varsayılan koyu; açık tema tercih eden için aynı canlılıkta açık palet. */
+/* Cashle — güven veren alışveriş teması: ferah yeşil-gri zemin, koyu yeşil mürekkep, zümrüt ana renk (para / tasarruf),
+   altın yalnız kazanç anlarında. Varsayılan açık; koyu tema aynı paletin gece hali.
+   Yerleşim: üstte net bir anlatım + 3 adım, altında sade kampanya kartları ızgarası. */
 :root{
-  color-scheme:dark;
-  --bg:#0E0B1F; --bg2:#141029; --card:#1A1535; --card2:#241D47; --line:rgba(255,255,255,.09); --line2:rgba(255,255,255,.16);
-  --ink:#F7F4FF; --soft:#ABA3CC; --mute:#7F78A3;
-  --pink:#FF3D7F; --orange:#FF8A1F; --yellow:#FFD23F; --cyan:#2EC5FF; --lime:#D4FF2A; --violet:#8B5CFF;
-  --ok:#2EE59D; --ok-bg:rgba(46,229,157,.14); --bad:#FF5470; --bad-bg:rgba(255,84,112,.14); --warn:#FFB020; --warn-bg:rgba(255,176,32,.14);
-  --grad:linear-gradient(115deg,#FF3D7F 0%,#FF6A3D 45%,#FFC21A 100%);
-  --grad2:linear-gradient(115deg,#8B5CFF,#2EC5FF);
-  --glass:rgba(20,16,41,.72);
-  --shadow:0 18px 50px -18px rgba(0,0,0,.65);
+  color-scheme:light;
+  --bg:#F3F6F4; --bg2:#FFFFFF; --card:#FFFFFF; --card2:#EDF2EF; --line:rgba(16,42,35,.10); --line2:rgba(16,42,35,.18);
+  --ink:#102A23; --soft:#4A5E57; --mute:#71837C;
+  --pink:#0B7A55; --orange:#B86A08; --yellow:#A87C00; --cyan:#1D5FBF; --lime:#B8912A; --violet:#24456E;
+  --ok:#0B7A55; --ok-bg:rgba(11,122,85,.10); --bad:#C2353F; --bad-bg:rgba(194,53,63,.09); --warn:#9A5B00; --warn-bg:rgba(184,106,8,.12);
+  --gold:#B8912A; --gold-bg:rgba(184,145,42,.14); --bordo:#6E0B24; --on:#FFFFFF;
+  --grad:linear-gradient(135deg,#0E8C60,#0A6B4B);
+  --grad2:linear-gradient(135deg,#24456E,#1D5FBF);
+  --glass:rgba(255,255,255,.86);
+  --shadow:0 1px 2px rgba(16,42,35,.05),0 10px 28px -16px rgba(16,42,35,.22);
   --ring:0 0 0 1px var(--line);
-  --display:"Unbounded","Manrope",system-ui,sans-serif;
-  --ui:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --display:"Bricolage Grotesque","Figtree",system-ui,sans-serif;
+  --ui:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"Space Mono",ui-monospace,monospace;
-  --r:18px;
+  --r:16px;
 }
-@media (prefers-color-scheme:light){
-  :root:not([data-theme="dark"]){
-    color-scheme:light;
-    --bg:#FFF6FA; --bg2:#FFFFFF; --card:#FFFFFF; --card2:#FFF0F6; --line:rgba(30,12,60,.1); --line2:rgba(30,12,60,.18);
-    --ink:#170F30; --soft:#5F5780; --mute:#857DA6;
-    --pink:#E8166B; --orange:#F06A00; --yellow:#E8A800; --cyan:#0A8FD6; --lime:#C6F21A; --violet:#6B3BF0;
-    --ok:#0A9A63; --ok-bg:rgba(10,154,99,.12); --bad:#E0254A; --bad-bg:rgba(224,37,74,.1); --warn:#B76E00; --warn-bg:rgba(232,168,0,.16);
-    --glass:rgba(255,255,255,.78); --shadow:0 18px 40px -20px rgba(60,20,90,.35);
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0B1512; --bg2:#0F1C18; --card:#12221D; --card2:#182C26; --line:rgba(220,240,232,.09); --line2:rgba(220,240,232,.16);
+    --ink:#E9F2EE; --soft:#A3B6AF; --mute:#7A8D86;
+    --pink:#34C48B; --orange:#E9A23B; --yellow:#E3B53C; --cyan:#7AAEF5; --lime:#D9B54A; --violet:#8FB0E0;
+    --ok:#34C48B; --ok-bg:rgba(52,196,139,.14); --bad:#F07A82; --bad-bg:rgba(240,122,130,.14); --warn:#E9A23B; --warn-bg:rgba(233,162,59,.14);
+    --gold:#D9B54A; --gold-bg:rgba(217,181,74,.16); --bordo:#7A1530;
+    --grad:linear-gradient(135deg,#1E9E6C,#147A54); --grad2:linear-gradient(135deg,#2F5C93,#3D77C9);
+    --glass:rgba(11,21,18,.84); --shadow:0 18px 40px -22px rgba(0,0,0,.7);
   }
 }
-:root[data-theme="light"]{
-  color-scheme:light;
-  --bg:#FFF6FA; --bg2:#FFFFFF; --card:#FFFFFF; --card2:#FFF0F6; --line:rgba(30,12,60,.1); --line2:rgba(30,12,60,.18);
-  --ink:#170F30; --soft:#5F5780; --mute:#857DA6;
-  --pink:#E8166B; --orange:#F06A00; --yellow:#E8A800; --cyan:#0A8FD6; --lime:#C6F21A; --violet:#6B3BF0;
-  --ok:#0A9A63; --ok-bg:rgba(10,154,99,.12); --bad:#E0254A; --bad-bg:rgba(224,37,74,.1); --warn:#B76E00; --warn-bg:rgba(232,168,0,.16);
-  --glass:rgba(255,255,255,.78); --shadow:0 18px 40px -20px rgba(60,20,90,.35);
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0B1512; --bg2:#0F1C18; --card:#12221D; --card2:#182C26; --line:rgba(220,240,232,.09); --line2:rgba(220,240,232,.16);
+  --ink:#E9F2EE; --soft:#A3B6AF; --mute:#7A8D86;
+  --pink:#34C48B; --orange:#E9A23B; --yellow:#E3B53C; --cyan:#7AAEF5; --lime:#D9B54A; --violet:#8FB0E0;
+  --ok:#34C48B; --ok-bg:rgba(52,196,139,.14); --bad:#F07A82; --bad-bg:rgba(240,122,130,.14); --warn:#E9A23B; --warn-bg:rgba(233,162,59,.14);
+  --gold:#D9B54A; --gold-bg:rgba(217,181,74,.16); --bordo:#7A1530;
+  --grad:linear-gradient(135deg,#1E9E6C,#147A54); --grad2:linear-gradient(135deg,#2F5C93,#3D77C9);
+  --glass:rgba(11,21,18,.84); --shadow:0 18px 40px -22px rgba(0,0,0,.7);
 }
 
 *{box-sizing:border-box}
@@ -541,3 +547,128 @@ code{font-family:var(--mono);font-size:12.5px;background:var(--bg2);border-radiu
 .lg-item .icon-btn{position:absolute;top:-8px;right:-8px;width:30px;height:30px;border-radius:50%}
 .field textarea{padding:10px 12px;border-radius:12px;border:1.5px solid var(--line2);background:var(--bg2);width:100%;font:inherit;color:inherit;resize:vertical}
 body.is-admin .marquee{display:none}
+
+/* ===== Cashle revizyonu: sade, güven veren yüzey. Bu blok önceki neon kurallarını geçersiz kılar. ===== */
+.bg-glow{inset:0;animation:none;background:radial-gradient(60vmax 40vmax at 0% 0%,var(--ok-bg),transparent 70%)}
+.brand-mark{animation:none;box-shadow:none;border-radius:11px}
+.brand-name b{background:none;color:var(--pink)}
+.brand-name{font-size:19px;letter-spacing:-.02em}
+h1,h2,h3{letter-spacing:-.02em}
+h1{font-weight:800}
+h2 .ic{color:var(--pink)}
+.nav a[aria-current="page"]{background:var(--ok-bg);color:var(--pink);box-shadow:none}
+.next .ic{color:var(--pink)}
+:focus-visible{outline-color:var(--cyan)}
+.avatar{box-shadow:none}
+.pulse{background:var(--ok)}
+@keyframes ping{0%{box-shadow:0 0 0 0 var(--ok-bg)}100%{box-shadow:0 0 0 8px transparent}}
+
+/* düğmeler: tek ana renk, parıltı yok */
+.btn{border-radius:12px;font-weight:700;border-width:1px}
+.btn:hover{transform:none}
+.btn.primary{animation:none;background:var(--grad);color:var(--on);box-shadow:0 6px 16px -10px var(--pink)}
+.btn.primary:hover{box-shadow:0 8px 20px -10px var(--pink);filter:brightness(1.05)}
+.btn.shine::after{display:none}
+.btn.win{background:var(--ok-bg);color:var(--ok);border:1px solid color-mix(in srgb,var(--ok) 40%,transparent)}
+.btn.telafi{background:var(--gold-bg);color:var(--ink);border:1px solid color-mix(in srgb,var(--gold) 55%,transparent);box-shadow:none}
+.btn.telafi .ic{color:var(--gold)}
+.btn.alt{border-color:var(--line2);color:var(--ink)}
+.btn.alt .ic{color:var(--cyan)}
+.btn.on{background:var(--card2);color:var(--cyan);border:1px solid color-mix(in srgb,var(--cyan) 45%,transparent)}
+.count{background:var(--bad)}
+.tabbar a[aria-current="page"]{color:var(--pink)}
+.tabbar a[aria-current="page"] .ic{color:var(--pink);filter:none}
+
+/* üst anlatım + 3 adım */
+.hero{gap:20px;padding-top:4px}
+@media (min-width:900px){.hero{grid-template-columns:1.1fr 1fr;align-items:stretch}}
+.hero-txt{gap:14px;align-content:center}
+.hero h1{font-size:clamp(34px,6.4vw,58px);line-height:1.02;font-weight:800}
+.grad{background:none;animation:none;color:var(--pink);-webkit-text-fill-color:currentColor}
+.hero p{font-size:17px;max-width:54ch;line-height:1.55}
+.trust{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 16px;font-weight:600;font-size:14px;color:var(--soft)}
+.trust li{display:flex;align-items:center;gap:6px}
+.trust .ic{color:var(--pink)}
+.hero-steps{list-style:none;margin:0;padding:6px 18px;display:grid;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);align-content:center}
+.hero-steps li{display:flex;gap:14px;align-items:flex-start;padding:14px 0}
+.hero-steps li + li{border-top:1px solid var(--line)}
+.hero-steps b{display:block;font-family:var(--display);font-size:17px;font-weight:700;margin-bottom:2px}
+.hero-steps li span:not(.hs-n){color:var(--soft);font-size:14.5px;line-height:1.5}
+.hero-steps .hs-n{position:static;opacity:1;flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--ok-bg);color:var(--pink);font-family:var(--display);font-weight:800;font-size:16px}
+
+/* Muhteşem Fırsat: bordo-siyah, altın vurgu; dikkat çeker ama bağırmaz */
+.mf-banner{color:var(--on);background:linear-gradient(120deg,var(--bordo),#1A0A0F 85%);animation:none;box-shadow:var(--shadow);border-radius:18px;border:1px solid color-mix(in srgb,var(--gold) 45%,transparent)}
+.mf-tag{background:var(--gold);color:#1A0A0F;animation:none;font-size:12px}
+.mf-banner b{font-weight:800}
+.mf-sub{font-weight:500;opacity:.9}
+.mf-cd{background:rgba(255,255,255,.12);color:var(--on)}
+.mf-ribbon{background:var(--bordo);color:#F3DFA6;animation:none;border-radius:10px;letter-spacing:.1em}
+.camp.mf{border:1px solid color-mix(in srgb,var(--bordo) 55%,transparent);box-shadow:var(--shadow)}
+.ticks .mf-note{background:var(--bordo);color:var(--on);border:0}
+.ticks .mf-note > .ic{color:#F3DFA6}
+.tag.mfx{background:var(--bordo);color:var(--on)}
+
+/* filtreler */
+.cchip{border-width:1px;font-weight:700;padding:7px 13px 7px 10px}
+.cchip.on{background:var(--ink);border-color:var(--ink);color:var(--bg);box-shadow:none}
+.cchip.on .ic{color:var(--bg)}
+.filters{background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:0 0 2px;gap:2px}
+.ftab{border-radius:10px 10px 0 0;padding:9px 12px;font-weight:700}
+.ftab.on{background:transparent;color:var(--pink);box-shadow:inset 0 -2px 0 var(--pink)}
+.ftab.on .fcount{background:var(--ok-bg);color:var(--pink)}
+.search{border-radius:14px}
+
+/* kampanya kartları: düz yüzey, tek bilgi satırı */
+.card{background:var(--card);box-shadow:var(--shadow)}
+.camp{gap:12px;border-top:0;padding:16px}
+.camp::before{display:none}
+.camp:hover{transform:none;box-shadow:0 1px 2px rgba(0,0,0,.04),0 14px 32px -18px color-mix(in srgb,var(--ink) 40%,transparent)}
+.camp-h{gap:8px}
+.camp-cat{font-weight:600;font-size:13px}
+.cat-ic{background:color-mix(in srgb,var(--c) 14%,transparent)}
+.cat-ic.xl{color:var(--on)}
+.camp-b .logo{width:84px}
+.camp-m h3{font-size:18px;font-weight:700}
+.offer{font-weight:600;font-size:14.5px;color:var(--ink)}
+.camp-meta{display:flex;justify-content:space-between;align-items:center;gap:8px 12px;flex-wrap:wrap;font-size:13px;color:var(--soft);font-weight:600}
+.cd-i{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cd-i .cd-l{font-size:13px;font-weight:600;color:var(--soft)}
+.cd-i .cd-l .ic{color:var(--mute)}
+.cd-i .cd-v{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--ink)}
+.cd-i.live .cd-l .ic,.cd-i.live .cd-v{color:var(--pink)}
+.cd-i .cd-s{flex-basis:100%;font-size:12px;color:var(--mute);font-weight:600}
+.cd-i.off .cd-l{color:var(--mute)}
+.camp-meta .q{font-variant-numeric:tabular-nums}
+.bar{height:5px;background:var(--card2)}
+.bar i{background:var(--pink)}
+.badge{font-weight:700}
+.b-upcoming{background:color-mix(in srgb,var(--cyan) 12%,transparent);color:var(--cyan)}
+.mine{font-weight:700}
+
+/* büyük sayaç (detay): sakin, okunaklı */
+.cd{border-radius:14px}
+.cd-l .ic{color:var(--mute)}
+.cd-v{font-weight:800}
+.cd.live .cd-v{background:none;color:var(--pink);-webkit-text-fill-color:currentColor}
+.cd.live .cd-l .ic{color:var(--pink)}
+.cd.allday .cd-l .ic{color:var(--pink)}
+.prog i{background:var(--pink)}
+.chip .ic{color:var(--pink)}
+.chip.hot{background:var(--ok-bg);color:var(--pink);border:1px solid color-mix(in srgb,var(--pink) 35%,transparent)}
+.chip.hot .ic{color:var(--pink)}
+.d-head,.cat-hero{background:var(--card)}
+.d-head{border-left:4px solid var(--c)}
+.cat-tile::after{opacity:.07}
+.tk-l{background:linear-gradient(160deg,var(--c),color-mix(in srgb,var(--c) 60%,#000))}
+.tk-pct{color:var(--on)}
+.logo{border-color:var(--line)}
+
+/* oyun ve sonuç pencereleri */
+.scrim{background:rgba(8,20,16,.62)}
+.burst{background:var(--grad);color:var(--on);box-shadow:0 0 0 10px var(--ok-bg),0 0 0 22px color-mix(in srgb,var(--ok) 6%,transparent)}
+.won-ticket{background:var(--ok-bg);border-color:color-mix(in srgb,var(--ok) 40%,transparent)}
+.wt-pct{background:none;color:var(--pink);-webkit-text-fill-color:currentColor}
+.game{background:radial-gradient(80% 60% at 50% 0%,rgba(52,196,139,.16),transparent 70%),#0B1512}
+.game.mf{background:radial-gradient(80% 60% at 50% 0%,rgba(122,21,48,.45),transparent 70%),#0B0607}
+.board .logo.reveal{box-shadow:0 0 0 6px rgba(57,255,20,.35),0 0 26px 6px #39FF14}
+@keyframes neon{to{box-shadow:0 0 0 10px rgba(57,255,20,.15),0 0 40px 12px #39FF14}}

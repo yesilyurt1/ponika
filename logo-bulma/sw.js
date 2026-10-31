@@ -1,6 +1,6 @@
 // Cashle service worker: uygulama kabuğunu önbelleğe alır; sayfa ağdan, yoksa önbellekten gelir.
 // Canlıda Web Push bildirimleri de burada karşılanır (push olayı).
-const CACHE = "lb-v6";
+const CACHE = "lb-v7";
 const FILES = ["./", "index.html", "styles.css", "app.js", "data.js", "kurallar.js", "markalar.js", "logos/manifest.js", "config.js", "manifest.webmanifest",
   "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png", "icons/favicon-32.png"];
 self.addEventListener("install", e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())));

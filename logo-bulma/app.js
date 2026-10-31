@@ -437,16 +437,22 @@ function actions(c, t, {detail = true} = {}) {
   return `<div class="acts">${det}${main}</div>`;
 }
 const campTitle = c => c.title ? `${c.title}: ${c.brand}` : c.brand;
+// Kartta kısa sayaç: başlangıç saati olmayan kampanyada sayaç çalışmaz.
+function cdInline(c, t, st) {
+  if (st === "full" || st === "ended") return `<span class="cd-i off"><span class="cd-l">${icon("lock")}${st === "full" ? "Kontenjan doldu" : "Süre doldu"}</span></span>`;
+  if (c.demo) return `<span class="cd-i"><span class="cd-l">${icon("clock")}Tüm gün açık</span></span>`;
+  if (st === "upcoming") return `<span class="cd-i"><span class="cd-l">${icon("clock")}${startTxt(c)}'de başlıyor</span><b class="cd-v" data-cd="${startsAt(c, t)}">${fmtClock(win(c).start - t.sod)}</b><span class="cd-s">${c.durationMin} dk sürecek</span></span>`;
+  return `<span class="cd-i live"><span class="cd-l">${icon("clock")}Bitmesine</span><b class="cd-v" data-cd="${endsAt(c, t)}">${fmtClock(win(c).end - t.sod)}</b></span>`;
+}
 function campCard(c, t) {
   const st = status(c, t), cat = CAT[c.cat], left = remaining(c, t), att = attemptOf(c, t);
   return `<article class="card camp ${c.mono ? "mf" : ""} st-${st}" style="--c:${cat.color}">
-    ${c.mono ? `<div class="mf-ribbon">${icon("bolt")}MUHTEŞEM FIRSAT${icon("bolt")}</div>` : ""}
-    <header class="camp-h">${catIcon(c.cat)}<span class="camp-cat">${esc(cat.name)} · ${timeLabel(c)}</span>${c.demo ? '<span class="tag">demo</span>' : ""}${badge(st)}</header>
+    ${c.mono ? `<div class="mf-ribbon">${icon("bolt")}MUHTEŞEM FIRSAT</div>` : ""}
+    <header class="camp-h">${catIcon(c.cat, "sm")}<span class="camp-cat">${esc(cat.name)}${c.demo ? "" : ` · ${timeLabel(c)}`}</span>${badge(st)}</header>
     <div class="camp-b">${logo(c.brand, {mono:c.mono})}<div class="camp-m"><h3>${esc(campTitle(c))}</h3><p class="offer">${esc(c.offer)}</p></div></div>
     ${att ? `<p class="mine ${att.result === "won" ? "won" : "lost"}">${att.result === "won" ? `${icon("trophy")}Kazandın` : `${icon("x")}Bu kampanyayı kaçırdın`}${att.telafi ? " · telafi alındı" : ""}</p>` : ""}
-    ${countdown(c, t, st)}
-    <div class="quota"><div class="quota-t"><span>${icon("ticket")}${left} / ${c.quota} kupon kaldı</span><span>${Math.round((c.quota - left) / c.quota * 100)}%</span></div>
-      <div class="bar"><i style="width:${(c.quota - left) / c.quota * 100}%"></i></div></div>
+    <div class="camp-meta">${cdInline(c, t, st)}<span class="q">${num(left)} kupon kaldı</span></div>
+    <div class="bar" role="img" aria-label="Kuponların yüzde ${Math.round((c.quota - left) / c.quota * 100)}'i verildi"><i style="width:${(c.quota - left) / c.quota * 100}%"></i></div>
     ${actions(c, t)}
   </article>`;
 }
@@ -510,21 +516,20 @@ views.home = () => {
   return `
   <section class="hero">
     <div class="hero-txt">
-      <span class="eyebrow"><i class="pulse"></i>Gün boyu yeni markalar · ${CAMPS.filter(c => status(c, t) === "active").length} kampanya canlı</span>
-      <h1>Logoyu <span class="grad">5 saniyede</span> bul,<br>indirimi <span class="hl">kap!</span></h1>
-      <p>Her kategoride gün boyu yeni marka kampanyaları açılır. Logolar arasında hedefi ilk bulanlar kişiye özel indirim kuponunu kazanır.</p>
-      <div class="hero-cta"><a class="btn primary big shine" href="#kampanyalar" data-act="scroll">${icon("play")}Hemen oyna</a><a class="btn ghost big" href="#/nasil">${icon("info")}Nasıl çalışır?</a></div>
+      <span class="eyebrow"><i class="pulse"></i>Şu an ${CAMPS.filter(c => status(c, t) === "active").length} kampanya açık</span>
+      <h1>Logoyu bul,<br><span class="grad">indirimi kazan.</span></h1>
+      <p>Markalar Cashle'da gün boyu indirim kampanyası açar. Kampanyaya katıl, ekrandaki logolar arasından markanın logosunu 5 saniye içinde bul; sana özel indirim kodun hemen gelsin.</p>
+      <ul class="trust"><li>${icon("check")}Katılmak ücretsiz</li><li>${icon("check")}Telefon numaranla giriş</li><li>${icon("check")}Kod yalnız sana özel</li></ul>
+      <div class="hero-cta"><a class="btn primary big" href="#kampanyalar" data-act="scroll">${icon("play")}Kampanyalara bak</a><a class="btn ghost big" href="#/nasil">${icon("info")}Kurallar</a></div>
     </div>
-    <div class="hero-card">
-      <span class="hc-l">${icon("clock")}Sıradaki kampanyaya</span>
-      <b class="hc-cd" data-cd="${nx.ms}">${fmtClock(nx.inSec)}</b>
-      <span class="hc-s">${K.hhmm(nx.min)}'de ${nextCount} kampanya birden açılıyor</span>
-      <div class="hc-stats"><div><b>${num(CAMPS.length)}</b><span>kampanya</span></div><div><b>${num(todayCoupons)}</b><span>günlük kupon</span></div><div><b>${D.categories.length}</b><span>kategori</span></div></div>
-    </div>
+    <ol class="hero-steps" aria-label="Nasıl çalışır">
+      <li><span class="hs-n" aria-hidden="true">1</span><div><b>Kampanyayı seç</b><span>${D.categories.length} kategoride gün boyu yeni marka. Açık olan kampanyada "Başla"ya dokun.</span></div></li>
+      <li><span class="hs-n" aria-hidden="true">2</span><div><b>Logoyu 5 saniyede bul</b><span>${D.boardSize} logo arasından markanın logosuna dokun. Her kampanyada tek hakkın var.</span></div></li>
+      <li><span class="hs-n" aria-hidden="true">3</span><div><b>İndirimini kullan</b><span>Kodun Kuponlarım'a düşer. Markanın sitesinde ödeme adımında gir; ${D.couponValidHours} saat geçerli.</span></div></li>
+    </ol>
   </section>
-  <div class="marquee" aria-hidden="true"><div class="mq-track">${[0, 1].map(() => K.ownBrands("buyuk-firsat").slice(0, 40).map(b => logo(b)).join("")).join("")}</div></div>
   ${mf.map(c => `<a class="mf-banner" href="#/kampanya/${c.id}"><span class="mf-tag">${icon("bolt")}MUHTEŞEM FIRSAT</span>
-    <b>${esc(c.brand)}: ${esc(c.offer)}</b><span class="mf-sub">${K.boardSizeFor(c, boardHint())} logo, hepsi bordo-siyah! Sadece isme ve ikona odaklan. <u>Hemen katıl</u></span>
+    <b>${esc(c.brand)}: ${esc(c.offer)}</b><span class="mf-sub">${K.boardSizeFor(c, boardHint())} logo, hepsi bordo-siyah. Renge değil, isme ve ikona odaklan. <u>Katıl</u></span>
     ${c.demo ? `<span class="mf-cd">${icon("fire")}<b>Tüm gün</b></span>` : `<span class="mf-cd">${icon("fire")}<b data-cd="${endsAt(c, t)}">${fmtClock(win(c).end - t.sod)}</b></span>`}</a>`).join("")}
   <section class="section" id="kampanyalar" aria-labelledby="campH">
     <div class="sec-head"><h2 id="campH">${icon("ticket")}Kampanyalar</h2><span class="muted small">Türkiye saati · ${hhmm(t.h, t.mi)}</span></div>
