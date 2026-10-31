@@ -11,7 +11,7 @@ Ziyaretçi ──HTTPS──▶ Caddy (80/443) ──▶ app: server.mjs (8080) 
 
 | # | Ne | Nereden / not |
 |---|---|---|
-| 1 | **Alan adı** | Ör. `1milyonuncumarka.com` (Natro, İsimtescil, GoDaddy…). `.com.tr` için belge istenir. |
+| 1 | **Alan adı** | `cashle.com.tr` (alındı, Natro). |
 | 2 | **Sunucu (VPS)** | Ubuntu 24.04, en az 2 GB RAM, 1 vCPU, 20 GB disk yeterli (aylık ~5–15 €). Türkiye'de veri tutmak için Turhost, Natro, Radore, Hostinger TR; yurt dışında Hetzner, DigitalOcean. Kişisel veriyi yurt dışında tutmak KVKK'da "yurt dışına aktarım"dır; avukatınla karar verin. |
 | 3 | **SMS sağlayıcısı** | Netgsm hesabı + onaylı **SMS başlığı** (gönderici adı, ör. `1MMARKA`; onayı birkaç gün sürer). Hatırlatma SMS'leri ticari ileti sayılabilir: **İYS** kaydı gerekir. Netgsm dışı bir sağlayıcı için bkz. §6. |
 | 4 | **Yönetim anahtarı** | Panel şifresi. Üret: `openssl rand -hex 24` (kimseyle paylaşma, bir parola yöneticisinde sakla). |
@@ -49,7 +49,7 @@ nano .env        # DOMAIN, ADMIN_KEY, NETGSM_USER, NETGSM_PASS, NETGSM_HEADER
 
 ```bash
 docker compose up -d --build
-docker compose logs -f app     # "1 Milyonuncu Marka: http://localhost:8080 (SMS: netgsm, ödeme: off)" görmelisin
+docker compose logs -f app     # "Cashle: http://localhost:8080 (SMS: netgsm, ödeme: off)" görmelisin
 ```
 
 Birkaç saniye içinde `https://alanadin` açılır (sertifika otomatik).
@@ -82,7 +82,7 @@ Birkaç saniye içinde `https://alanadin` açılır (sertifika otomatik).
 
 | Değişken | Değer | Açıklama |
 |---|---|---|
-| `DOMAIN` | `1milyonuncumarka.com` | Caddy sertifikası için |
+| `DOMAIN` | `cashle.com.tr` | Caddy sertifikası için |
 | `ADMIN_KEY` | ≥16 karakter | Yönetim paneli anahtarı; kısa ise sunucu başlamaz |
 | `SMS_MODE` | `netgsm` · `webhook` · `dev` · `outbox` | `dev` kodu ekranda gösterir (yalnız test). `outbox`ta SMS gitmez, giriş kapalıdır. |
 | `NETGSM_USER` / `NETGSM_PASS` / `NETGSM_HEADER` | | Netgsm abone no, API şifresi, onaylı başlık |

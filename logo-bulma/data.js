@@ -1,4 +1,4 @@
-// 1 Milyonuncu Marka: kampanya verisi.
+// Cashle: kampanya verisi.
 // logo_bulma.xlsx dosyasından üretildi (Sayfa1, satır 4-27). Düzeltmeler için ANALIZ.md'ye bak.
 // Diğer 12 kategorinin programı, demo kampanyalar ve indirim koşulları kurallar.js'de üretilir.
 // Gerçek sistemde bu liste yönetim panelinden girilir ve sunucudan gelir.

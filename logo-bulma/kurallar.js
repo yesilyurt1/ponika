@@ -1,4 +1,4 @@
-// 1 Milyonuncu Marka: ortak iş kuralları. Site (tarayıcı) ve sunucu (server.mjs) aynı dosyayı kullanır.
+// Cashle: ortak iş kuralları. Site (tarayıcı) ve sunucu (server.mjs) aynı dosyayı kullanır.
 // data.js ve markalar.js'den sonra yüklenir; window.LB_KURALLAR'ı tanımlar.
 (function (root) {
   "use strict";
@@ -178,7 +178,7 @@
     return all.map(l => {
       try {
         const u = new URL(l.url);
-        u.searchParams.set("utm_source", "1milyonuncumarka"); u.searchParams.set("utm_medium", "kupon");
+        u.searchParams.set("utm_source", "cashle"); u.searchParams.set("utm_medium", "kupon");
         u.searchParams.set("utm_campaign", c.id); if (code) u.searchParams.set("utm_content", code);
         return {ad:l.ad, url:u.toString()};
       } catch { return null; }

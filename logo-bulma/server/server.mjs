@@ -1,4 +1,4 @@
-// 1 Milyonuncu Marka: platform sunucusu (bağımlılıksız Node.js 20+). Siteyi de sunar.
+// Cashle: platform sunucusu (bağımlılıksız Node.js 20+). Siteyi de sunar.
 // Oyun, kişiye özel kupon, çoklu indirim, telafi, SMS kodlu giriş, hatırlatma/SMS/push zamanlayıcısı,
 // marka entegrasyonu (imzalı kod doğrulama + sipariş/iade bildirimi), UTM tıklama takibi ve admin paneli API'si.
 // İş kuralları sitenin de kullandığı kurallar.js'den gelir; iki taraf aynı hesabı yapar.
@@ -257,7 +257,7 @@ const routes = {
     if (SMS_MODE === "outbox" && !ENV.ALLOW_OUTBOX_LOGIN) fail(503, "sms_yapilandirilmadi", "SMS sağlayıcısı bağlanmadı; giriş kodu gönderilemiyor.");
     const code = String(crypto.randomInt(100000, 1000000));
     db.otps[phone] = {hash:sha(`${phone}:${code}`), at:nowFn(), exp:nowFn() + OTP_MIN * 60e3, tries:0}; save();
-    const ch = await sendSms(phone, `1 Milyonuncu Marka giriş kodun: ${code}. ${OTP_MIN} dakika geçerlidir.`);
+    const ch = await sendSms(phone, `Cashle giriş kodun: ${code}. ${OTP_MIN} dakika geçerlidir.`);
     db.outbox.unshift({at:nowFn(), to:phone, title:"Giriş kodu", body:"(kod gizli)", channels:[ch]}); db.outbox.splice(20000);
     return {gonderildi:true, ...(SMS_MODE === "dev" ? {gelistirmeKodu:code} : {})};
   },
@@ -440,7 +440,7 @@ const routes = {
       db.outbox.forEach(o => { if (o.to === ph) o.to = anon; });
     } else if (tur === "sms_gonder") {
       const list = body.hedef === "hatirlatma" ? [...new Set(db.reminders.filter(r => r.campId === body.kampanya && r.day === t.day).map(r => r.phone))] : [body.telefon];
-      const msg = String(body.mesaj || "").slice(0, 300), title = String(body.baslik || "1 Milyonuncu Marka").slice(0, 80);
+      const msg = String(body.mesaj || "").slice(0, 300), title = String(body.baslik || "Cashle").slice(0, 80);
       if (!msg) fail(400, "mesaj_gerekli", "Mesaj gerekli.");
       let n = 0; for (const ph of list) { const uu = db.users[ph]; if (uu) { await deliver(uu, title, msg, body.link || "#/", {forceSms:true}); n++; } }
       audit("admin", "sms", null, "gonderildi", {n}); save(); return {gonderilen:n};
@@ -583,7 +583,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (!ADMIN_KEY || ADMIN_KEY.length < 16) { console.error("Hata: ADMIN_KEY en az 16 karakter olmalı."); process.exit(1); }
   if (SMS_MODE === "dev") console.warn("Uyarı: SMS_MODE=dev; giriş kodları yanıtta görünür. Yalnız test için.");
   if (PAYMENT_MODE === "demo") console.warn("Uyarı: PAYMENT_MODE=demo; ücretli telafi ödemesi doğrulanmadan kabul edilir.");
-  server.listen(PORT, () => console.log(`1 Milyonuncu Marka: http://localhost:${PORT} (SMS: ${SMS_MODE}, ödeme: ${PAYMENT_MODE})`));
+  server.listen(PORT, () => console.log(`Cashle: http://localhost:${PORT} (SMS: ${SMS_MODE}, ödeme: ${PAYMENT_MODE})`));
   setInterval(() => runScheduler().catch(e => console.error("zamanlayıcı", e)), 30_000).unref();
   backup(); setInterval(backup, 3600e3).unref();
   const stop = () => { flushNow(); server.close(() => process.exit(0)); setTimeout(() => process.exit(0), 3000).unref(); };

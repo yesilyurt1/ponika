@@ -37,7 +37,7 @@ Kullanıcı ödemeyi tamamlar
 | **İmzalı istekler** | Her marka isteği markanın gizli anahtarıyla imzalanır (HMAC-SHA256) ve 5 dakika geçerlidir. Başkası marka adına sipariş ya da iade bildiremez. |
 | **Tekrar sayılmaz** | Aynı sipariş numarası ikinci kez gelirse komisyon iki kez yazılmaz; başka bir kodla gelirse reddedilir. |
 | **İşlem kaydı** | Her doğrulama, sipariş ve iade zaman damgasıyla saklanır; anlaşmazlıkta delil olur. |
-| **UTM'li yönlendirme linki** | Kupondaki "Trendyol'da kullan / Web sitesinde kullan" düğmesi `https://alanadin/r/KOD/0` adresine gider. Sunucu tıklamayı (kod, zaman) kaydeder ve müşteriyi `utm_source=1milyonuncumarka&utm_medium=kupon&utm_content=KOD` ekli marka linkine yönlendirir. Marka kendi Google Analytics'inde bu trafiği ve satışları görür; sen de yönetim panelinde "Linke tıkladı" adımını görürsün. |
+| **UTM'li yönlendirme linki** | Kupondaki "Trendyol'da kullan / Web sitesinde kullan" düğmesi `https://alanadin/r/KOD/0` adresine gider. Sunucu tıklamayı (kod, zaman) kaydeder ve müşteriyi `utm_source=cashle&utm_medium=kupon&utm_content=KOD` ekli marka linkine yönlendirir. Marka kendi Google Analytics'inde bu trafiği ve satışları görür; sen de yönetim panelinde "Linke tıkladı" adımını görürsün. |
 | **Yönetim paneli** | `/#/admin` (anahtarla girilir): Özet, Üyeler, Kuponlar, Satın alma takibi (huni: kupon kazandı → linke tıkladı → kasada doğrulandı → satın aldı), Hatırlatmalar, Gönderilen bildirimler, Kampanyalar, Logolar, Kasa simülatörü, Markalar. Kupon iptal/uzat/iade, elle "kullanıldı" işaretleme, üye engelleme/silme (KVKK), tek kişiye ya da kampanyanın hatırlatma listesine SMS gönderme ve CSV dışa aktarma buradan yapılır. |
 | **Aylık rapor ve CSV** | `GET /api/admin/rapor?ay=2026-10` ve `GET /api/admin/kuponlar.csv?ay=2026-10` marka başına sepet, indirim, ödenen tutar, iade ve komisyonu verir. Telafi ödemeleri ve reklam izlenmeleri de raporda. |
 
@@ -143,7 +143,7 @@ Yanıt: `{"kaydedildi":true,"tekrar":false,"indirim":600,"odenecek":1400,"komisy
 ```js
 const ts = Math.floor(Date.now() / 1000), body = JSON.stringify({kod, siparisNo, sepetTutari});
 const imza = crypto.createHmac("sha256", process.env.LB_GIZLI).update(`${ts}.${body}`).digest("hex");
-await fetch("https://api.1milyonuncumarka.com/api/marka/siparis", {method:"POST", body,
+await fetch("https://cashle.com.tr/api/marka/siparis", {method:"POST", body,
   headers:{"Content-Type":"application/json", Authorization:`Bearer ${process.env.LB_API}`, "X-Zaman":String(ts), "X-Imza":imza}});
 ```
 

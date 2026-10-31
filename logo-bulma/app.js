@@ -1,4 +1,4 @@
-// 1 Milyonuncu Marka: site uygulaması.
+// Cashle: site uygulaması.
 // İki modda çalışır:
 //  - Sunucu modu (canlı): sayfa server/server.mjs tarafından sunulduğunda /api'ye bağlanır; tüm kurallar sunucuda uygulanır.
 //  - Yerel mod (demo): sunucu yoksa veriler bu tarayıcıda (localStorage) tutulur; aynı kurallar burada taklit edilir.
@@ -252,7 +252,7 @@ const Local = {
       db.coupons.forEach(x => { if (x.phone === p.telefon) { x.phone = "silindi"; x.name = "Silinen üye"; } });
     } else if (tur === "sms_gonder") {
       const list = p.hedef === "hatirlatma" ? [...new Set(db.reminders.filter(r => r.campId === p.kampanya && r.day === t.day).map(r => r.phone))] : [p.telefon];
-      for (const ph of list) { const uu = db.users[ph]; if (uu) deliverLocal(uu, p.baslik || "1 Milyonuncu Marka", p.mesaj, p.link || "#/", true); }
+      for (const ph of list) { const uu = db.users[ph]; if (uu) deliverLocal(uu, p.baslik || "Cashle", p.mesaj, p.link || "#/", true); }
       return {gonderilen:list.length};
     } else if (tur === "fill") {
       const c = campById(p.kampanya); if (status(c, t) !== "active") return {n:0};
@@ -988,7 +988,7 @@ async function telafiPick(id, kind) {
     let ad; try { ad = await Api.startAd(instKey(c, clock())); } catch { return toast("Reklam başlatılamadı."); }
     const sec = c.telafi.adSec;
     modal(`<div class="modal center ad" role="dialog" aria-modal="true" aria-labelledby="adT"><span class="tag">Reklam</span>
-      <div class="ad-screen"><b>1 Milyonuncu Marka</b><span>Gün boyu ${D.categories.length} kategoride yeni fırsat. Bildirimleri aç, hiçbirini kaçırma!</span>${icon("bell", "big")}</div>
+      <div class="ad-screen"><b>Cashle</b><span>Gün boyu ${D.categories.length} kategoride yeni fırsat. Bildirimleri aç, hiçbirini kaçırma!</span>${icon("bell", "big")}</div>
       <h2 id="adT">Reklam bitince kuponun gelecek</h2><div class="bar ad-bar"><i id="adBar"></i></div><p class="small muted" style="margin:0"><b id="adLeft">${sec}</b> sn</p>
       <button class="btn ghost" type="button" data-close>Vazgeç</button></div>`);
     const t0 = Date.now(), iv = setInterval(() => {
@@ -1091,7 +1091,7 @@ function render(focusMain = false) {
   const navName = {home:"home", category:"home", campaign:"home", coupons:"coupons", profile:"profile", how:"how", admin:"admin"}[route.name];
   document.querySelectorAll("[data-nav]").forEach(a => a.dataset.nav === navName ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
   const titles = {home:"Kampanyalar", category:CAT[route.arg]?.name, campaign:campById(route.arg)?.brand, coupons:"Kuponlarım", profile:"Profil", how:"Nasıl çalışır", admin:"Yönetim"};
-  document.title = (titles[route.name] ? titles[route.name] + " · " : "") + "1 Milyonuncu Marka";
+  document.title = (titles[route.name] ? titles[route.name] + " · " : "") + "Cashle";
   if (installEvt) { const b = $("#installBtn"); if (b) b.hidden = false; }
   document.body.classList.toggle("is-admin", route.name === "admin");
   updateChrome();
@@ -1197,7 +1197,7 @@ document.addEventListener("click", async e => {
   else if (a === "aSms" || a === "aSmsCamp") {
     const camp = a === "aSmsCamp" ? campById(act.dataset.id) : null;
     modal(`<form class="modal" role="dialog" aria-modal="true" aria-labelledby="asT" data-form="aSms" data-phone="${esc(act.dataset.phone || "")}" data-camp="${camp ? camp.id : ""}"><h2 id="asT">${icon("sms")}${camp ? `${esc(camp.brand)} hatırlatma listesine bildir` : "SMS / bildirim gönder"}</h2>
-      <div class="field"><label for="asTitle">Başlık</label><input id="asTitle" name="title" required value="${camp ? esc(`${camp.brand} kampanyası`) : "1 Milyonuncu Marka"}"></div>
+      <div class="field"><label for="asTitle">Başlık</label><input id="asTitle" name="title" required value="${camp ? esc(`${camp.brand} kampanyası`) : "Cashle"}"></div>
       <div class="field"><label for="asMsg">Mesaj</label><textarea id="asMsg" name="msg" rows="3" required maxlength="300">${camp ? esc(`${camp.offer}. ${startTxt(camp)}'de başlıyor, logoyu 5 saniyede bul!`) : ""}</textarea></div>
       <p class="small muted" style="margin:0">Yalnızca İYS onayı olan üyelere SMS gider; uygulama içi bildirim herkese düşer.</p>
       <div class="acts"><button class="btn ghost" type="button" data-close>Vazgeç</button><button class="btn primary" type="submit">Gönder</button></div></form>`);

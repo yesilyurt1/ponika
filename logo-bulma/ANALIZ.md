@@ -1,4 +1,6 @@
-# 1 Milyonuncu Marka: `logo_bulma.xlsx` analizi
+# Cashle: `logo_bulma.xlsx` analizi
+
+> Platformun adı **Cashle** olarak belirlendi (alan adı: cashle.com.tr). Excel'deki çalışma adı "1 Milyonuncu Marka" idi.
 
 Bu belge Excel'deki fikri inceler. Verideki hataları, eksik kuralları ve sitenin sorunsuz çalışması için yapılması gerekenleri listeler. Aynı klasördeki prototip (`index.html`) bu analizdeki kararlarla çalışır.
 
@@ -156,7 +158,7 @@ Kaynaklar: [Hürriyet – Trendyol Kazandıran Çark](https://www.hurriyet.com.t
   - "Daxtors", "Muggo", "Ceyo", "Limoya", "Marjin", "Gezer", "Ziya": marka sahibinin resmi adı ve logosu teyit edilmeli.
   - "Cat" (Caterpillar), "Harley" (Harley-Davidson): resmi marka adıyla yazılmalı.
   - "Noname" (Ev Tekstil 08:00): Gerçek bir marka mı, yoksa B30'daki "noname ve A brand" notundan kalan bir yer tutucu mu?
-- **İsim tutarsızlığı:** Platformun adı B2'de "1 Milyonuncu Marka", B37'de "1 Milyon Logo" olarak geçiyor. Tek bir isim seçilmeli; alan adı ve marka tescili buna göre yapılmalı.
+- **İsim tutarsızlığı:** Platformun adı B2'de "1 Milyonuncu Marka", B37'de "1 Milyon Logo" olarak geçiyor. Tek bir isim seçilmeli; alan adı ve marka tescili buna göre yapılmalı. **Karar: Cashle.**
 - "LCW **Banner**ını bulan" ifadesi: Oyunun konusu banner mı, logo mu? Tüm kurallar logo dediği için prototip logo kullanır.
 
 ### 2.7 Zaman tablosu

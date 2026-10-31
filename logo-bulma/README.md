@@ -1,4 +1,4 @@
-# 1 Milyonuncu Marka
+# Cashle
 
 Kategorilere göre gün boyu açılan marka kampanyalarında logoyu 5 saniyede bulana kişiye özel indirim kuponu veren site, sunucusu ve yönetim paneli.
 

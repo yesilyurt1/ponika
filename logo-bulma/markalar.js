@@ -1,4 +1,4 @@
-// 1 Milyonuncu Marka: kategori marka kütüphanesi.
+// Cashle: kategori marka kütüphanesi.
 // Biçim: "Marka adı" ya da "Marka adı|alanadi.com". Alan adı yalnızca emin olunan markalarda yazılı;
 // logo indirme betiği (tools/logo-indir.mjs) alan adı olan markaların logosunu çeker,
 // olmayanlar için rapor verir. Liste markalarla sözleşme yapıldıkça panelden güncellenmeli.
