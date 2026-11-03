@@ -209,6 +209,7 @@ table{border-collapse:collapse;width:100%}
 <body>
 <div class="app" id="app"><div class="loading">Yükleniyor…</div></div>
 <dialog id="dlg"></dialog>
+<dialog id="ask"></dialog>
 <div id="toast" aria-live="polite"></div>
 <script src="config.js"></script>
 <script type="module">
@@ -975,6 +976,18 @@ function closeDlg(silent) { UI.dlg = null; lastDlg = ""; const d = $("#dlg"); if
 $("#dlg").addEventListener("close", () => { if (UI.dlg) { UI.dlg = null; lastDlg = ""; schedule(); } });
 $("#dlg").addEventListener("click", e => { if (e.target === e.currentTarget) closeDlg(); });
 
+/* ----- sayfa içi onay penceresi (confirm yerine) ----- */
+function ask(msg, okLabel = "Evet") {
+  return new Promise(res => {
+    const d = $("#ask");
+    d.innerHTML = `<div class="dlg"><p style="font-weight:500">${esc(msg)}</p><div class="row" style="justify-content:flex-end"><button class="btn" data-a="no">Vazgeç</button><button class="btn danger" data-a="yes">${esc(okLabel)}</button></div></div>`;
+    let done = false; const end = v => { if (done) return; done = true; if (d.open) d.close(); res(v); };
+    d.onclick = e => { const b = e.target.closest("[data-a]"); if (b) end(b.dataset.a === "yes"); else if (e.target === d) end(false); };
+    d.oncancel = () => end(false);
+    d.showModal(); d.querySelector('[data-a="yes"]').focus();
+  });
+}
+
 /* ---------- olaylar ---------- */
 async function run(fn, okMsg) {
   try { const r = await fn(); if (okMsg) toast(typeof okMsg === "function" ? okMsg(r) : okMsg); schedule(); return r; }
@@ -997,7 +1010,7 @@ document.addEventListener("click", async e => {
     case "close": closeDlg(); break;
     case "logout": closeDlg(true); await run(() => B.signOut()); break;
     case "demo-login": await B.demoLogin(id); break;
-    case "demo-reset": if (confirm("Demo verileri sıfırlansın mı?")) await run(() => B.reset(), "Demo verisi yenilendi."); break;
+    case "demo-reset": if (await ask("Demo verileri sıfırlansın mı?")) await run(() => B.reset(), "Demo verisi yenilendi."); break;
     case "auth-mode": UI.authMode = v; schedule(); break;
     case "pw-reset": {
       const em = $('input[name="email"]')?.value.trim();
@@ -1008,7 +1021,7 @@ document.addEventListener("click", async e => {
     case "cancel-booking": {
       const b = S.bookings[id], late = isLate(S.slots[b.slotId]);
       const msg = late ? `Derse ${set().changeHours} saatten az kaldı. İptal edersen bu ders hakkın YANAR. Yine de iptal edilsin mi?` : "Ders iptal edilsin mi? Hakkın iade edilecek.";
-      if (!confirm(msg)) break;
+      if (!await ask(msg)) break;
       await run(() => ops.cancel(id), l => l ? "Ders iptal edildi, hakkın yandı." : "Ders iptal edildi, hakkın iade edildi.");
       break;
     }
@@ -1020,9 +1033,9 @@ document.addEventListener("click", async e => {
       if (ok) { UI.move = null; closeDlg(); }
       break;
     }
-    case "admin-remove": if (confirm("Üye bu dersten çıkarılsın mı? Ders hakkı iade edilir.")) await run(() => ops.cancel(id, { admin: true }), "Üye dersten çıkarıldı, hakkı iade edildi."); break;
-    case "delete-slot": if (confirm("Ders takvimden silinsin mi?")) { await run(() => ops.deleteSlot(id), "Ders silindi."); closeDlg(); } break;
-    case "pkg-delete": if (confirm("Paket silinsin mi? Bu pakete bağlı derslerin hakkı hesaplanamaz hale gelir.")) await run(() => ops.deletePackage(id), "Paket silindi."); break;
+    case "admin-remove": if (await ask("Üye bu dersten çıkarılsın mı? Ders hakkı iade edilir.")) await run(() => ops.cancel(id, { admin: true }), "Üye dersten çıkarıldı, hakkı iade edildi."); break;
+    case "delete-slot": if (await ask("Ders takvimden silinsin mi?")) { await run(() => ops.deleteSlot(id), "Ders silindi."); closeDlg(); } break;
+    case "pkg-delete": if (await ask("Paket silinsin mi? Bu pakete bağlı derslerin hakkı hesaplanamaz hale gelir.")) await run(() => ops.deletePackage(id), "Paket silindi."); break;
   }
 });
 document.addEventListener("change", async e => {
@@ -1050,7 +1063,7 @@ document.addEventListener("submit", async e => {
     case "signup": await run(() => B.signUp(g("name"), g("phone"), g("email"), String(fd.get("pw")))); break;
     case "admin-add": await run(() => ops.book(id, g("uid")), "Üye derse eklendi."); break;
     case "cancel-slot":
-      if (confirm("Ders iptal edilsin mi? Kayıtlı üyelerin hakları iade edilir.")) await run(() => ops.cancelSlot(id, g("reason")), "Ders iptal edildi.");
+      if (await ask("Ders iptal edilsin mi? Kayıtlı üyelerin hakları iade edilir.")) await run(() => ops.cancelSlot(id, g("reason")), "Ders iptal edildi.");
       break;
     case "pkg-add": await run(() => ops.addPackage(id, g("size"), g("start")), "Paket tanımlandı."); break;
     case "pkg-edit": await run(() => ops.updatePackage(id, { expiresAt: g("expiresAt") }), "Bitiş tarihi güncellendi."); break;
