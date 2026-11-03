@@ -74,7 +74,11 @@ p{margin:0}
 /* header */
 .top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:10px}
-.logo{width:38px;height:38px;border-radius:12px;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;font-weight:700;font-size:18px}
+.logo{width:38px;height:38px;border-radius:12px;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;font-weight:700;font-size:18px;flex:none}
+img.logo{background:var(--card);object-fit:contain;border:1px solid var(--line)}
+.login img.logo,.login .logo{width:56px;height:56px;font-size:24px;border-radius:16px}
+.logo-edit{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.logo-edit .logo{width:72px;height:72px;font-size:30px;border-radius:18px}
 .brand h1{font-size:20px}
 .brand .small{line-height:1.1}
 .who{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -527,6 +531,7 @@ const FirebaseBackend = {
     const a = app.initializeApp(CFG.firebase);
     this.auth = auth.getAuth(a); this.db = fs.getFirestore(a);
     this.unsubs = [];
+    fs.onSnapshot(fs.doc(this.db, "settings", "main"), d => { S.settings = { ...DEFAULTS, ...(d.exists() ? d.data() : {}) }; schedule(); }, e => console.warn(e));
     auth.onAuthStateChanged(this.auth, u => this.onUser(u).catch(e => { console.error(e); toast(errText(e), true); }));
   },
   async onUser(u) {
@@ -555,7 +560,6 @@ const FirebaseBackend = {
       if (target === "users" && S.me) { S.users[S.me.id] = { ...S.users[S.me.id], ...S.me, ...(m[S.me.id] || {}), role: S.me.role }; }
       schedule();
     }, err));
-    this.unsubs.push(onSnapshot(doc(this.db, "settings", "main"), d => { S.settings = { ...DEFAULTS, ...(d.exists() ? d.data() : {}) }; schedule(); }, err));
     const since = ymd(addDays(new Date(), -120));
     coll("slots", query(collection(this.db, "slots"), where("start", ">=", since)), "slots");
     if (admin) {
@@ -614,6 +618,7 @@ const fv = (k, d) => UI.f[k] ?? d;
 
 function render() {
   const app = $("#app");
+  syncHead();
   if (!S.ready) { app.innerHTML = `<div class="loading">Yükleniyor…</div>`; return; }
   if (!S.me) { app.innerHTML = loginView(); closeDlg(true); return; }
   if (isAdmin()) queueMicrotask(() => ops.sweep());
@@ -642,7 +647,7 @@ function header() {
       : `<span class="pill warn">Paket yok</span>`;
   }
   return `<header class="top">
-    <div class="brand"><div class="logo" aria-hidden="true">P</div><div><h1>${esc(set().studioName)}</h1><div class="small">Ders takvimi</div></div></div>
+    <div class="brand">${logoHtml()}<div><h1>${esc(set().studioName)}</h1><div class="small">Ders takvimi</div></div></div>
     <div class="who">${credit}<span class="pill ${isAdmin() ? "mine" : ""}">${esc(me.name)}${isAdmin() ? " · Yönetici" : ""}</span>
       <button class="btn sm" data-act="logout">Çıkış</button></div>
   </header>`;
@@ -652,7 +657,7 @@ function loginView() {
   if (DEMO) {
     const us = Object.values(LocalBackend.db.users);
     return `<div class="login">
-      <div class="brand"><div class="logo">P</div><div><h1>${esc(set().studioName)}</h1><div class="small">Ders takvimi · Demo</div></div></div>
+      <div class="brand">${logoHtml()}<div><h1>${esc(set().studioName)}</h1><div class="small">Ders takvimi · Demo</div></div></div>
       <div class="card stack"><h2>Kim olarak gireceksin?</h2>
         <p class="small">Demo modunda hesap gerekmez. Hocanın ekranını görmek için “Hoca (Yönetici)” ile gir.</p>
         <div class="demo-users">${us.map(u => `<button class="item" data-act="demo-login" data-id="${u.id}"><span class="main"><b>${esc(u.name)}</b><span class="small">${u.role === "admin" ? "Yönetim paneli" : "Üye"}</span></span><span>›</span></button>`).join("")}</div>
@@ -660,7 +665,7 @@ function loginView() {
   }
   const mode = UI.authMode || "in";
   return `<div class="login">
-    <div class="brand"><div class="logo">P</div><div><h1>${esc(set().studioName)}</h1><div class="small">Ders takvimi</div></div></div>
+    <div class="brand">${logoHtml()}<div><h1>${esc(set().studioName)}</h1><div class="small">Ders takvimi</div></div></div>
     <div class="card stack">
       <div class="seg" role="group"><button aria-pressed="${mode === "in"}" data-act="auth-mode" data-v="in">Giriş yap</button><button aria-pressed="${mode === "up"}" data-act="auth-mode" data-v="up">Kayıt ol</button></div>
       <form class="stack" data-form="${mode === "in" ? "signin" : "signup"}">
@@ -966,9 +971,51 @@ function settingsView() {
     <p class="small">Örnek: “en az 2 kişi” ve “12 saat önce” seçiliyse, dersten 12 saat önce derste 1 kişi varsa ders otomatik iptal olur ve hakkı iade edilir. Bir dersi az kişiyle de yapmak istersen ders penceresinden “Az kişiyle de yap” seçeneğini işaretle.</p>
     <p class="small">Paket süreleri: 8 ders → 1 ay, 16 ders → 2 ay, 24 ders → 3 ay. Gerekirse üyenin paket bitiş tarihini Üyeler bölümünden uzatabilirsin.</p>
   </div>
+  <div class="card stack"><h2>Logo</h2>
+    <div class="logo-edit">${logoHtml()}
+      <div class="stack" style="gap:8px">
+        <label class="btn" style="display:inline-flex;align-items:center;width:max-content">Logo yükle<input type="file" id="logo-file" accept="image/*" data-act="logo-upload" hidden></label>
+        ${set().logo ? `<button class="btn ghost sm danger" data-act="logo-remove" style="width:max-content">Logoyu kaldır</button>` : ""}
+      </div></div>
+    <p class="small">Kare veya yuvarlak bir logo en iyi sonucu verir (PNG ya da JPG). Logo sol üstte, giriş ekranında ve tarayıcı sekmesinde görünür.</p>
+  </div>
   ${notifySettingsCard()}
   ${DEMO ? `<div class="card stack"><h2>Demo</h2><p class="small">Demo verilerini baştan oluşturur.</p><button class="btn danger" data-act="demo-reset">Demo verisini sıfırla</button></div>` : ""}
   </div>`;
+}
+
+/* ----- logo ----- */
+function logoHtml() {
+  const c = set();
+  return c.logo ? `<img class="logo" src="${esc(c.logo)}" alt="${esc(c.studioName)} logosu">`
+                : `<div class="logo" aria-hidden="true">${esc((c.studioName || "P").trim().charAt(0).toLocaleUpperCase("tr") || "P")}</div>`;
+}
+// Yüklenen resmi en fazla 256 piksele küçültüp veritabanına sığacak bir veri adresine çevirir
+function shrinkImage(file) {
+  return new Promise((res, rej) => {
+    if (!file.type.startsWith("image/")) return rej(new UserError("Lütfen bir resim dosyası seçin."));
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, 256 / Math.max(img.width, img.height));
+      const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      let out = c.toDataURL("image/png");
+      if (out.length > 200000) out = c.toDataURL("image/jpeg", 0.85);
+      res(out);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new UserError("Resim okunamadı. PNG veya JPG deneyin.")); };
+    img.src = url;
+  });
+}
+let lastHead = "";
+function syncHead() {
+  const c = set(), key = c.studioName + "|" + (c.logo || "").length;
+  if (key === lastHead) return; lastHead = key;
+  document.title = c.studioName;
+  let link = document.querySelector('link[rel="icon"]');
+  if (c.logo) { if (!link) { link = document.createElement("link"); link.rel = "icon"; document.head.append(link); } link.href = c.logo; }
+  else if (link) link.remove();
 }
 
 /* ----- bildirimler ----- */
@@ -1080,6 +1127,7 @@ document.addEventListener("click", async e => {
     case "close": closeDlg(); break;
     case "logout": closeDlg(true); await run(() => B.signOut()); break;
     case "demo-login": await B.demoLogin(id); break;
+    case "logo-remove": if (await ask("Logo kaldırılsın mı?", "Kaldır")) await run(() => ops.saveSettings({ logo: "" }), "Logo kaldırıldı."); break;
     case "demo-reset": if (await ask("Demo verileri sıfırlansın mı?")) await run(() => B.reset(), "Demo verisi yenilendi."); break;
     case "auth-mode": UI.authMode = v; schedule(); break;
     case "pw-reset": {
@@ -1110,6 +1158,10 @@ document.addEventListener("click", async e => {
 });
 document.addEventListener("change", async e => {
   const el = e.target;
+  if (el.dataset.act === "logo-upload" && el.files?.[0]) {
+    const f = el.files[0]; el.value = "";
+    await run(async () => ops.saveSettings({ logo: await shrinkImage(f) }), "Logo kaydedildi.");
+  }
   if (el.dataset.act === "keep-open") await run(() => ops.setKeepOpen(el.dataset.id, el.checked), el.checked ? "Ders az kişiyle de yapılacak." : "Otomatik iptal açık.");
   if (el.dataset.act === "jump-month") { const c = parseYmd(UI.cursor); UI.cursor = ymd(new Date(c.getFullYear(), Number(el.value), 1)); schedule(); el.blur(); }
   if (el.dataset.act === "jump-year") { const c = parseYmd(UI.cursor); UI.cursor = ymd(new Date(Number(el.value), c.getMonth(), 1)); schedule(); el.blur(); }

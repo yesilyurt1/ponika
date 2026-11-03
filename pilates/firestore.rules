@@ -32,8 +32,9 @@ service cloud.firestore {
         && (joins || leaves);
     }
 
+    // Stüdyo adı, logo ve kurallar: giriş ekranında da görünsün diye herkese açık (gizli bilgi içermez).
     match /settings/{id} {
-      allow read: if signedIn();
+      allow read: if true;
       allow write: if isAdmin();
     }
 
