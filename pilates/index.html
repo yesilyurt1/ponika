@@ -228,7 +228,11 @@ const DEFAULTS = {
   minAttendees: 2,      // dersin yapılması için en az kişi
   autoCancelHours: 12,  // dersten kaç saat önce kişi sayısı kontrol edilir
   changeHours: 24,      // iptal/değişiklik için son süre (saat)
-  duration: 50          // ders süresi (dk)
+  duration: 50,         // ders süresi (dk)
+  reminderHours: 26,    // hatırlatma dersten kaç saat önce gider
+  notifyEmail: true,    // e-posta bildirimleri
+  notifySms: false,     // SMS bildirimleri
+  expiryWarnDays: 7     // paket bitişinden kaç gün önce uyarı
 };
 const PKG_MONTHS = { 8: 1, 16: 2, 24: 3 };
 const WD = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
@@ -268,7 +272,7 @@ class UserError extends Error {}
 const fail = m => { throw new UserError(m); };
 
 /* ---------- durum ---------- */
-const S = { ready: false, me: null, users: {}, packages: {}, slots: {}, bookings: {}, settings: { ...DEFAULTS } };
+const S = { ready: false, me: null, users: {}, packages: {}, slots: {}, bookings: {}, settings: { ...DEFAULTS }, notifications: [], notifier: null };
 const UI = { tab: "calendar", view: "week", cursor: today(), move: null, dlg: null, f: {}, memberQuery: "" };
 const isAdmin = () => S.me?.role === "admin";
 const isAdminUser = u => u.role === "admin" || ADMIN_EMAILS.includes(String(u.email || "").toLowerCase());
@@ -544,7 +548,7 @@ const FirebaseBackend = {
     S.ready = true; schedule();
   },
   subscribe(uid, admin) {
-    const { doc, collection, query, where, onSnapshot } = this.fs;
+    const { doc, collection, query, where, orderBy, limit, onSnapshot } = this.fs;
     const err = e => { console.error(e); toast("Veri okunamadı: " + (e.code || e.message), true); };
     const coll = (name, q, target) => this.unsubs.push(onSnapshot(q, snap => {
       const m = {}; snap.forEach(d => m[d.id] = { id: d.id, ...d.data() }); S[target] = m;
@@ -558,6 +562,10 @@ const FirebaseBackend = {
       coll("users", collection(this.db, "users"), "users");
       coll("packages", collection(this.db, "packages"), "packages");
       coll("bookings", collection(this.db, "bookings"), "bookings");
+      this.unsubs.push(onSnapshot(doc(this.db, "system", "notifier"), d => { S.notifier = d.exists() ? d.data() : null; schedule(); }, () => {}));
+      this.unsubs.push(onSnapshot(query(collection(this.db, "notifications"), orderBy("at", "desc"), limit(30)), snap => {
+        S.notifications = []; snap.forEach(d => S.notifications.push({ id: d.id, ...d.data() })); schedule();
+      }, () => {}));
     } else {
       this.unsubs.push(onSnapshot(doc(this.db, "users", uid), d => { if (d.exists()) { S.me = { ...S.me, ...d.data(), id: uid, role: "member" }; S.users[uid] = S.me; schedule(); } }, err));
       coll("packages", query(collection(this.db, "packages"), where("userId", "==", uid)), "packages");
@@ -853,6 +861,7 @@ function mineView() {
   return `<div class="stack">
     <div class="card stack"><h2>Paketlerim</h2>${pk.length ? `<div class="list">${pk.map(p => pkgCard(p)).join("")}</div>` : `<p class="small">Tanımlı paketin yok.</p>`}
       <p class="small">Kurallar: 8 derslik paket 1 ayda, 16 derslik 2 ayda, 24 derslik 3 ayda bitmelidir. Dersi en geç ${cfg.changeHours} saat önce iptal edersen veya değiştirirsen hakkın yanmaz. Bir derste ${cfg.autoCancelHours} saat kala ${cfg.minAttendees} kişi yoksa ders otomatik iptal olur ve hakkın iade edilir.</p></div>
+    ${myNotifyCard()}
     <div class="card stack"><h2>Yaklaşan derslerim</h2>${up.length ? `<div class="list">${up.map(b => bookingRow(b)).join("")}</div>` : `<p class="small">Planlı dersin yok. Takvimden ders seçebilirsin.</p>`}</div>
     <div class="card stack"><h2>Geçmiş</h2>${past.length ? `<div class="list">${past.map(b => bookingRow(b)).join("")}</div>` : `<p class="small">Henüz geçmiş ders yok.</p>`}</div>
   </div>`;
@@ -889,6 +898,7 @@ function memberDialog(uid) {
       <div class="row" style="align-items:end"><button class="btn sm" type="submit">Bilgileri kaydet</button></div>
     </form>
     <hr>
+    <p class="small">Bildirimler: ${notifyPrefText(u)}</p>
     <h3>Paket tanımla</h3>
     <form class="fgrid" data-form="pkg-add" data-id="${uid}">
       <label class="f">Paket<select name="size"><option value="8">8 ders · 1 ay</option><option value="16">16 ders · 2 ay</option><option value="24">24 ders · 3 ay</option></select></label>
@@ -956,7 +966,67 @@ function settingsView() {
     <p class="small">Örnek: “en az 2 kişi” ve “12 saat önce” seçiliyse, dersten 12 saat önce derste 1 kişi varsa ders otomatik iptal olur ve hakkı iade edilir. Bir dersi az kişiyle de yapmak istersen ders penceresinden “Az kişiyle de yap” seçeneğini işaretle.</p>
     <p class="small">Paket süreleri: 8 ders → 1 ay, 16 ders → 2 ay, 24 ders → 3 ay. Gerekirse üyenin paket bitiş tarihini Üyeler bölümünden uzatabilirsin.</p>
   </div>
+  ${notifySettingsCard()}
   ${DEMO ? `<div class="card stack"><h2>Demo</h2><p class="small">Demo verilerini baştan oluşturur.</p><button class="btn danger" data-act="demo-reset">Demo verisini sıfırla</button></div>` : ""}
+  </div>`;
+}
+
+/* ----- bildirimler ----- */
+const NTYPE = { remind: "Ders hatırlatması", cancel: "Ders iptali", moved: "Saat değişikliği", expiry: "Paket bitiyor" };
+function notifyPrefText(u) {
+  const c = set(), parts = [];
+  if (c.notifyEmail) parts.push(u.notifyEmail === false ? "e-posta kapalı" : (u.email ? "e-posta açık" : "e-posta adresi yok"));
+  if (c.notifySms) parts.push(u.notifySms === false ? "SMS kapalı" : (u.phone ? "SMS açık" : "telefon yok"));
+  return parts.join(" · ") || "stüdyoda kapalı";
+}
+function myNotifyCard() {
+  const c = set(), u = S.me;
+  if (!c.notifyEmail && !c.notifySms) return "";
+  return `<div class="card stack"><h2>Bildirim tercihlerim</h2>
+    <p class="small">Dersinden ${c.reminderHours} saat önce hatırlatma alırsın. Dersin iptal olursa, hocan dersini başka saate alırsa veya paketin bitmek üzereyken kullanılmamış hakkın varsa da haber verilir.</p>
+    <form class="stack" data-form="my-notify">
+      ${c.notifyEmail ? `<label class="row" style="font-weight:600"><input type="checkbox" id="my-notify-email" name="notifyEmail" ${u.notifyEmail === false ? "" : "checked"}> E-posta ile bildir${u.email ? ` <span class="small">(${esc(u.email)})</span>` : ""}</label>` : ""}
+      ${c.notifySms ? `<label class="row" style="font-weight:600"><input type="checkbox" id="my-notify-sms" name="notifySms" ${u.notifySms === false ? "" : "checked"}> SMS ile bildir</label>` : ""}
+      <label class="f">Cep telefonu<input type="tel" id="my-notify-phone" name="phone" value="${esc(u.phone || "")}" placeholder="05xx xxx xx xx" autocomplete="tel"></label>
+      <div><button class="btn primary" type="submit">Kaydet</button></div>
+    </form></div>`;
+}
+function upcomingReminders() {
+  const c = set(), now = Date.now(), until = now + 48 * HOUR;
+  return Object.values(S.bookings).filter(b => b.status === "booked" && S.slots[b.slotId] && !slotVoid(S.slots[b.slotId]))
+    .map(b => ({ b, sendAt: slotStart(S.slots[b.slotId]) - c.reminderHours * HOUR }))
+    .filter(x => x.sendAt > now - HOUR && x.sendAt < until)
+    .sort((a, b) => a.sendAt - b.sendAt).slice(0, 15);
+}
+function notifySettingsCard() {
+  const c = set(), st = S.notifier;
+  let status;
+  if (DEMO) status = `<div class="banner warn"><span>Demo modunda bildirim gönderilmez. Aşağıda canlı sistemde gidecek hatırlatmaların önizlemesi var.</span></div>`;
+  else if (!st) status = `<div class="banner warn"><span>Bildirim gönderici henüz hiç çalışmadı. Kurulum adımları README dosyasında: “Hatırlatmalar (e-posta / SMS)”.</span></div>`;
+  else {
+    const ago = Math.round((Date.now() - Date.parse(st.lastRun)) / 60000);
+    const ok = ago < 60 && !st.lastError;
+    status = `<div class="banner ${ok ? "info" : "warn"}"><span>Son çalışma: ${ago < 1 ? "az önce" : ago + " dk önce"} · E-posta ${st.channels?.email ? "bağlı" : "bağlı değil"} · SMS ${st.channels?.sms ? "bağlı" : "bağlı değil"}${st.lastError ? ` · Son hata: ${esc(st.lastError)}` : ""}${ago >= 60 ? " · Gönderici 1 saattir çalışmadı, GitHub Actions'ı kontrol edin." : ""}</span></div>`;
+  }
+  const log = DEMO
+    ? upcomingReminders().map(x => `<div class="item"><div class="main"><b>${esc(userName(x.b.userId))}</b><span class="small">${esc(fmt("short", x.b.slotStart))} ${hhmm(x.b.slotStart)} dersi · hatırlatma ${esc(FMT.dt.format(new Date(x.sendAt)))}</span></div><span class="pill muted">Planlı</span></div>`).join("")
+    : S.notifications.map(n => `<div class="item"><div class="main"><b>${esc(userName(n.userId))} · ${NTYPE[n.type] || esc(n.type)}</b><span class="small">${esc(FMT.dt.format(new Date(n.at)))}${n.error ? ` · ${esc(n.error)}` : ""}</span></div>
+        <span class="pill ${n.status === "sent" ? "free" : n.status === "failed" ? "cancel" : "muted"}">${n.status === "sent" ? "Gönderildi: " + (n.channels || []).map(x => x === "sms" ? "SMS" : "e-posta").join(" + ") : n.status === "failed" ? "Gönderilemedi" : "Gönderiliyor"}</span></div>`).join("");
+  return `<div class="card stack"><h2>Bildirimler</h2>${status}
+    <form class="stack" data-form="notify-settings">
+      <div class="checks">
+        <label><input type="checkbox" id="set-notify-email" name="notifyEmail" ${c.notifyEmail ? "checked" : ""}> E-posta gönder</label>
+        <label><input type="checkbox" id="set-notify-sms" name="notifySms" ${c.notifySms ? "checked" : ""}> SMS gönder</label>
+      </div>
+      <div class="fgrid">
+        <label class="f">Hatırlatma (dersten kaç saat önce)<input type="number" id="set-reminder-hours" name="reminderHours" min="1" max="72" value="${c.reminderHours}"></label>
+        <label class="f">Paket bitiş uyarısı (kaç gün önce)<input type="number" id="set-expiry-days" name="expiryWarnDays" min="0" max="30" value="${c.expiryWarnDays}"></label>
+      </div>
+      <div><button class="btn primary" type="submit">Kaydet</button></div>
+    </form>
+    <p class="small">Giden bildirimler: ders hatırlatması, ders iptali (hoca iptal ettiğinde veya az katılımda), hocanın üyeyi başka saate taşıması ve kullanılmamış hakkı olan paketin bitmek üzere olması. İpucu: hatırlatma süresini iptal süresinden (${c.changeHours} saat) biraz uzun tutarsan üye, iptal hakkı bitmeden haberdar olur.</p>
+    <h3>${DEMO ? "Önümüzdeki 48 saatte gidecek hatırlatmalar" : "Son gönderilenler"}</h3>
+    <div class="list">${log || `<p class="small">Kayıt yok.</p>`}</div>
   </div>`;
 }
 
@@ -1073,6 +1143,19 @@ document.addEventListener("submit", async e => {
       const n = k => Math.max(0, Number(fd.get(k)) || 0);
       await run(() => ops.saveSettings({ studioName: g("studioName") || DEFAULTS.studioName, capacity: n("capacity") || 5, duration: n("duration") || 50,
         changeHours: n("changeHours"), minAttendees: n("minAttendees") || 1, autoCancelHours: n("autoCancelHours") }), "Ayarlar kaydedildi.");
+      break;
+    }
+    case "notify-settings": {
+      const n = k => Math.max(0, Number(fd.get(k)) || 0);
+      await run(() => ops.saveSettings({ notifyEmail: fd.get("notifyEmail") === "on", notifySms: fd.get("notifySms") === "on",
+        reminderHours: n("reminderHours"), expiryWarnDays: n("expiryWarnDays") }), "Bildirim ayarları kaydedildi.");
+      break;
+    }
+    case "my-notify": {
+      const patch = { phone: g("phone") };
+      if (f.querySelector('[name="notifyEmail"]')) patch.notifyEmail = fd.get("notifyEmail") === "on";
+      if (f.querySelector('[name="notifySms"]')) patch.notifySms = fd.get("notifySms") === "on";
+      await run(() => ops.updateUser(S.me.id, patch), "Bildirim tercihlerin kaydedildi.");
       break;
     }
     case "gen": {

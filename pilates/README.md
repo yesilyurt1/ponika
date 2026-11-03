@@ -70,8 +70,54 @@ Bunun için Google'ın ücretsiz **Firebase** hizmeti kullanılır. Küçük bir
 - Zamanında iptal edilen dersin hakkı geri gelir. Geç iptal edilen dersin hakkı yanar.
 - Paket süresi dolduğunda kullanılmayan haklar yanar. Paket bitiş tarihinden sonraki bir ders seçilemez.
 
+## Hatırlatmalar (e-posta / SMS)
+
+Sayfa kapalıyken de mesaj gidebilmesi için GitHub Actions kullanılır. Ücretsizdir ve 15 dakikada bir
+`notify/notify.mjs` betiğini çalıştırır. Gönderilen bildirimler:
+
+| Bildirim | Ne zaman |
+|---|---|
+| Ders hatırlatması | Dersten 26 saat önce (Ayarlar → Bildirimler). Böylece üye ücretsiz iptal süresi bitmeden haberdar olur. Derste az kişi varsa iptal riski de yazılır. |
+| Ders iptali | Hoca dersi iptal ettiğinde veya ders az katılım nedeniyle otomatik iptal olduğunda |
+| Saat değişikliği | Hoca üyeyi başka bir derse taşıdığında |
+| Paket bitiyor | Paketin bitmesine 7 gün kala hâlâ seçilmemiş ders hakkı varsa |
+
+Aynı bildirim iki kez gönderilmez. Gönderici ayrıca az katılımlı dersleri, hoca sayfayı açmasa bile zamanında iptal eder.
+Hoca, **Ayarlar → Bildirimler** bölümünden e-posta ve SMS'i açıp kapatabilir, gönderim geçmişini ve göndericinin son çalışma zamanını görebilir.
+Üyeler de **Derslerim → Bildirim tercihlerim** bölümünden bildirimleri kapatabilir ve telefon numaralarını güncelleyebilir.
+
+### Kurulum
+
+GitHub'da depo sayfasında **Settings → Secrets and variables → Actions** bölümüne aşağıdakiler eklenir.
+
+1. **Firebase erişimi (zorunlu).** Firebase konsolunda ⚙ → Project settings → **Service accounts** → **Generate new private key**
+   ile bir JSON dosyası indirilir. Dosyanın tüm içeriği `FIREBASE_SERVICE_ACCOUNT` adlı **secret** olarak eklenir.
+   Bu dosya veritabanına tam erişim verir. Hiçbir yere yüklenmemeli, kimseyle paylaşılmamalıdır.
+2. **E-posta.** Gmail ile en kolay yol: Google hesabında 2 adımlı doğrulamayı açın, ardından
+   https://myaccount.google.com/apppasswords adresinden bir "uygulama şifresi" oluşturun. Secret'lar:
+   - `SMTP_HOST` = `smtp.gmail.com`
+   - `SMTP_PORT` = `465`
+   - `SMTP_USER` = gmail adresi
+   - `SMTP_PASS` = uygulama şifresi
+   - `MAIL_FROM` = `Pilates Stüdyo <adres@gmail.com>` (isteğe bağlı)
+3. **SMS (isteğe bağlı, ücretli).** Türkiye için **Netgsm** önerilir (onaylı bir SMS başlığı gerekir). Twilio da desteklenir.
+   - Netgsm: **variable** `SMS_PROVIDER` = `netgsm`. **Secret'lar:** `NETGSM_USERCODE`, `NETGSM_PASSWORD`, `NETGSM_HEADER` (onaylı başlık).
+   - Twilio: **variable** `SMS_PROVIDER` = `twilio`. **Secret'lar:** `TWILIO_SID`, `TWILIO_TOKEN`, `TWILIO_FROM`.
+   - Uygulamada da **Ayarlar → Bildirimler → SMS gönder** işaretlenmelidir. SMS varsayılan olarak kapalıdır.
+4. **Variables** sekmesine:
+   - `APP_URL` = uygulamanın adresi (mesajların sonuna eklenir)
+   - `PILATES_NOTIFY_ENABLED` = `true` (zamanlanmış çalışmayı açar)
+5. Deneme: **Actions → Pilates bildirimleri → Run workflow** (deneme kutusu işaretli) ile çalıştırılır. Kayıtta kime ne
+   gideceği listelenir ama hiçbir şey gönderilmez. Sonuç doğruysa kutu işaretsiz çalıştırılır ya da 15 dakikalık
+   otomatik çalışma beklenir.
+
+> GitHub zamanlanmış görevleri yalnızca varsayılan dalda (genellikle `main`) çalıştırır. Bu yüzden değişikliklerin `main` dalına
+> alınmış olması gerekir. GitHub yoğun saatlerde zamanlanmış görevleri birkaç dakika geciktirebilir.
+
 ## Dosyalar
 
 - `index.html`: uygulamanın tamamı
 - `config.js`: stüdyo adı, yönetici e-postası, Firebase bağlantı ayarları
 - `firestore.rules`: veritabanı güvenlik kuralları (üyeler sadece kendi kayıtlarını değiştirebilir)
+- `notify/`: e-posta ve SMS gönderici (`lib.mjs` ile kimin ne alacağı hesaplanır, `notify.mjs` ile gönderilir, `node test.mjs` testleri çalıştırır)
+- `../.github/workflows/pilates-bildirim.yml`: göndericiyi 15 dakikada bir çalıştıran zamanlayıcı

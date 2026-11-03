@@ -56,6 +56,16 @@ service cloud.firestore {
       allow update: if isAdmin() || (signedIn() && memberSlotChange());
     }
 
+    // Bildirim kayıtları ve gönderici durumu: sadece GitHub Actions'taki gönderici yazar, hoca okur.
+    match /notifications/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+    match /system/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
     match /bookings/{id} {
       allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
       allow create: if isAdmin()

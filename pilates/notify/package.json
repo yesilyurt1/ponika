@@ -1,0 +1,15 @@
+{
+  "name": "pilates-notify",
+  "private": true,
+  "type": "module",
+  "description": "Pilates ders takvimi için e-posta ve SMS hatırlatmaları",
+  "scripts": {
+    "start": "node notify.mjs",
+    "test": "node test.mjs"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "nodemailer": "^6.9.16"
+  }
+}

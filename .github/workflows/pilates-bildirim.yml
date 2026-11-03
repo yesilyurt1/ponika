@@ -1,0 +1,55 @@
+# Pilates ders takvimi: e-posta / SMS hatırlatmaları ve otomatik ders iptali.
+# Kurulum: pilates/README.md → "Hatırlatmalar (e-posta / SMS)".
+# Not: GitHub zamanlanmış görevleri yalnızca deponun varsayılan dalında (main) çalıştırır.
+name: Pilates bildirimleri
+
+on:
+  schedule:
+    - cron: "7,22,37,52 * * * *"   # yaklaşık 15 dakikada bir
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Deneme: hiçbir şey gönderme, sadece listele"
+        type: boolean
+        default: true
+
+concurrency:
+  group: pilates-bildirim
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    # Kurulum bitene kadar boşuna çalışmasın: Settings → Variables → PILATES_NOTIFY_ENABLED = true
+    if: ${{ vars.PILATES_NOTIFY_ENABLED == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: pilates/notify
+    env:
+      TZ: Europe/Istanbul
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '' }}
+      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      APP_URL: ${{ vars.APP_URL }}
+      SMTP_HOST: ${{ secrets.SMTP_HOST }}
+      SMTP_PORT: ${{ secrets.SMTP_PORT }}
+      SMTP_USER: ${{ secrets.SMTP_USER }}
+      SMTP_PASS: ${{ secrets.SMTP_PASS }}
+      MAIL_FROM: ${{ secrets.MAIL_FROM }}
+      SMS_PROVIDER: ${{ vars.SMS_PROVIDER }}
+      NETGSM_USERCODE: ${{ secrets.NETGSM_USERCODE }}
+      NETGSM_PASSWORD: ${{ secrets.NETGSM_PASSWORD }}
+      NETGSM_HEADER: ${{ secrets.NETGSM_HEADER }}
+      TWILIO_SID: ${{ secrets.TWILIO_SID }}
+      TWILIO_TOKEN: ${{ secrets.TWILIO_TOKEN }}
+      TWILIO_FROM: ${{ secrets.TWILIO_FROM }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: pilates/notify/package-lock.json
+      - run: npm ci --omit=dev --no-audit --no-fund
+      - run: npm test
+      - run: node notify.mjs
