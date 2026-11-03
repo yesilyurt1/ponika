@@ -1,0 +1,1088 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pilates Ders Takvimi</title>
+<meta name="description" content="Pilates stüdyosu için ders seçme, iptal ve paket takibi.">
+<meta name="theme-color" content="#F4F2EC">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#F4F2EC; --card:#FFFFFF; --line:#E3DED3; --line-strong:#CFC8B9;
+  --ink:#2A2722; --soft:#6E675C; --chip:#ECE8DF;
+  --brand:#4F7A5C; --brand-ink:#FFFFFF; --brand-bg:#E3EEE5;
+  --free:#2C7A4B; --free-bg:#E2F2E7;
+  --full:#A4521F; --full-bg:#F7E5D6;
+  --mine:#3157B5; --mine-bg:#E1E8FA;
+  --cancel:#B23434; --cancel-bg:#F8E1E1;
+  --muted:#8A8478; --muted-bg:#EEEBE4;
+  --warn:#9A6400; --warn-bg:#FDF0D3;
+  --shadow:0 6px 24px rgba(42,39,34,.08);
+  --ui:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#15181A; --card:#1E2225; --line:#2E3438; --line-strong:#41494F;
+    --ink:#ECEAE4; --soft:#A7A196; --chip:#272C30;
+    --brand:#86B894; --brand-ink:#0F1A12; --brand-bg:#1F3326;
+    --free:#6FCF94; --free-bg:#18301F;
+    --full:#F0A06A; --full-bg:#3A2616;
+    --mine:#8FB0FF; --mine-bg:#1F2A47;
+    --cancel:#FF8A80; --cancel-bg:#3D1D1D;
+    --muted:#8E887C; --muted-bg:#24282B;
+    --warn:#F2BE55; --warn-bg:#3A2E12;
+    --shadow:0 6px 24px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#15181A; --card:#1E2225; --line:#2E3438; --line-strong:#41494F;
+  --ink:#ECEAE4; --soft:#A7A196; --chip:#272C30;
+  --brand:#86B894; --brand-ink:#0F1A12; --brand-bg:#1F3326;
+  --free:#6FCF94; --free-bg:#18301F;
+  --full:#F0A06A; --full-bg:#3A2616;
+  --mine:#8FB0FF; --mine-bg:#1F2A47;
+  --cancel:#FF8A80; --cancel-bg:#3D1D1D;
+  --muted:#8E887C; --muted-bg:#24282B;
+  --warn:#F2BE55; --warn-bg:#3A2E12;
+  --shadow:0 6px 24px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:15px;line-height:1.45;padding:0 16px}
+.app{max-width:1100px;margin:0 auto;padding:calc(12px + env(safe-area-inset-top,0px)) 0 calc(40px + env(safe-area-inset-bottom,0px));display:grid;gap:14px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--mine);outline-offset:2px}
+h1,h2,h3{margin:0;line-height:1.2}
+h2{font-size:19px} h3{font-size:16px}
+p{margin:0}
+.small{font-size:13px;color:var(--soft)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+.grow{flex:1}
+.stack{display:grid;gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{width:38px;height:38px;border-radius:12px;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;font-weight:700;font-size:18px}
+.brand h1{font-size:20px}
+.brand .small{line-height:1.1}
+.who{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 10px;font-size:13px;font-weight:600;background:var(--chip);color:var(--ink);white-space:nowrap}
+.pill.brand{background:var(--brand-bg);color:var(--brand)}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.pill.cancel{background:var(--cancel-bg);color:var(--cancel)}
+.pill.mine{background:var(--mine-bg);color:var(--mine)}
+.pill.free{background:var(--free-bg);color:var(--free)}
+.pill.full{background:var(--full-bg);color:var(--full)}
+.pill.muted{background:var(--muted-bg);color:var(--muted)}
+.tabs{display:flex;gap:4px;background:var(--chip);padding:4px;border-radius:12px;overflow-x:auto}
+.tabs button{border:0;background:transparent;padding:8px 14px;border-radius:9px;font-weight:600;font-size:14px;color:var(--soft);white-space:nowrap}
+.tabs button[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
+/* buttons & forms */
+.btn{border:1px solid var(--line-strong);background:var(--card);border-radius:10px;padding:8px 14px;font-weight:600;font-size:14px;min-height:38px}
+.btn:hover{border-color:var(--soft)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.btn.danger{color:var(--cancel);border-color:var(--cancel)}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.sm{padding:4px 10px;min-height:30px;font-size:13px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.block{width:100%}
+label.f{display:grid;gap:4px;font-size:13px;font-weight:600;color:var(--soft)}
+input[type=text],input[type=email],input[type=password],input[type=tel],input[type=number],input[type=date],input[type=time],select,textarea{
+  border:1px solid var(--line-strong);background:var(--card);border-radius:10px;padding:8px 10px;min-height:38px;width:100%;color:var(--ink);font-weight:500}
+textarea{min-height:64px;resize:vertical}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.checks{display:flex;gap:6px;flex-wrap:wrap}
+.checks label{display:flex;align-items:center;gap:6px;border:1px solid var(--line-strong);border-radius:10px;padding:6px 10px;font-weight:600;font-size:14px}
+
+/* banners */
+.banner{border-radius:12px;padding:10px 14px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;font-weight:500}
+.banner.mine{background:var(--mine-bg);color:var(--mine)}
+.banner.warn{background:var(--warn-bg);color:var(--warn)}
+.banner.info{background:var(--brand-bg);color:var(--brand)}
+
+/* calendar toolbar */
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+.toolbar .nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.toolbar select{width:auto}
+.range{font-weight:700;font-size:17px}
+.seg{display:inline-flex;background:var(--chip);border-radius:10px;padding:3px}
+.seg button{border:0;background:transparent;padding:6px 12px;border-radius:8px;font-weight:600;font-size:13px;color:var(--soft)}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.legend{display:flex;gap:6px;flex-wrap:wrap}
+
+/* week */
+.week{display:grid;gap:10px}
+.day{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;display:grid;gap:8px;align-content:start}
+.day.today{border-color:var(--brand);box-shadow:inset 0 0 0 1px var(--brand)}
+.day.past{opacity:.72}
+.dhead{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+.dhead b{font-size:15px}
+.slots{display:flex;flex-wrap:wrap;gap:6px}
+.empty{font-size:13px;color:var(--muted)}
+.slot{border:1px solid var(--line-strong);background:var(--card);border-radius:12px;padding:7px 9px;display:grid;gap:3px;text-align:left;min-width:112px;flex:1 1 112px}
+.slot .t{font-weight:700;font-size:15px}
+.slot .lbl{font-size:12px;font-weight:600}
+.dots{display:flex;gap:3px}
+.dot{width:9px;height:9px;border-radius:50%;border:1.5px solid currentColor;opacity:.9}
+.dot.on{background:currentColor}
+.slot.st-open{border-color:var(--free);color:var(--free);background:var(--free-bg)}
+.slot.st-full{border-color:var(--full);color:var(--full);background:var(--full-bg)}
+.slot.st-cancelled,.slot.st-auto_cancelled{border-color:var(--cancel);color:var(--cancel);background:var(--cancel-bg)}
+.slot.st-cancelled .t,.slot.st-auto_cancelled .t{text-decoration:line-through}
+.slot.st-closed,.slot.st-done,.slot.st-running{color:var(--muted);background:var(--muted-bg);border-color:var(--line)}
+.slot.mine{border-color:var(--mine);color:var(--mine);background:var(--mine-bg);box-shadow:inset 0 0 0 1px var(--mine)}
+.slot .t,.slot .lbl{color:inherit}
+.slot.risk .lbl::after{content:" · az kişi";color:var(--warn)}
+@media (min-width:900px){
+  .week{grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+  .week .slots{flex-direction:column}
+  .week .slot{min-width:0;flex:none}
+  .day{min-height:180px}
+}
+
+/* month */
+.month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.mh{font-size:12px;font-weight:700;color:var(--soft);text-align:center;padding:4px 0}
+.mcell{background:var(--card);border:1px solid var(--line);border-radius:10px;min-height:76px;padding:6px;display:grid;align-content:start;gap:4px;text-align:left}
+.mcell.out{opacity:.4}
+.mcell.today{border-color:var(--brand);box-shadow:inset 0 0 0 1px var(--brand)}
+.mcell b{font-size:14px}
+.mdots{display:flex;flex-wrap:wrap;gap:3px}
+.md{width:8px;height:8px;border-radius:50%}
+.md.st-open{background:var(--free)} .md.st-full{background:var(--full)} .md.mine{background:var(--mine)!important}
+.md.st-cancelled,.md.st-auto_cancelled{background:var(--cancel)} .md.st-closed,.md.st-done,.md.st-running{background:var(--line-strong)}
+.mcell .small{font-size:11px;line-height:1.2}
+@media (max-width:520px){ .mcell{min-height:58px;padding:4px} .mcell .small{display:none} }
+
+/* lists */
+.list{display:grid;gap:8px}
+.item{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--card)}
+.item .main{display:grid;gap:2px;min-width:0}
+.item .main b{font-size:15px}
+button.item{width:100%;text-align:left}
+.bar{height:8px;border-radius:999px;background:var(--chip);overflow:hidden;display:flex}
+.bar i{display:block;height:100%}
+.bar .u{background:var(--brand)} .bar .p{background:var(--mine)}
+.pkg{display:grid;gap:8px}
+
+/* seats in dialog */
+.seats{display:flex;gap:8px;flex-wrap:wrap}
+.seat{width:42px;height:42px;border-radius:50%;border:2px dashed var(--line-strong);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--muted)}
+.seat.on{border-style:solid;border-color:var(--brand);background:var(--brand-bg);color:var(--brand)}
+.seat.me{border-color:var(--mine);background:var(--mine-bg);color:var(--mine)}
+
+/* dialog */
+dialog{border:0;border-radius:18px;padding:0;background:var(--card);color:var(--ink);width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24px);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog::backdrop{background:rgba(20,18,15,.45)}
+.dlg{padding:18px;display:grid;gap:14px}
+.dlg-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.x{border:0;background:var(--chip);border-radius:50%;width:34px;height:34px;font-size:18px;line-height:1;flex:none}
+hr{border:0;border-top:1px solid var(--line);margin:0;width:100%}
+
+/* login */
+.login{max-width:420px;margin:6vh auto 0;display:grid;gap:14px}
+.demo-users{display:grid;gap:8px}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:50;display:grid;gap:6px;width:min(480px,calc(100vw - 32px));pointer-events:none}
+.toast{background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:12px;font-weight:600;box-shadow:var(--shadow);animation:tin .2s ease-out}
+.toast.err{background:var(--cancel);color:#fff}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}}
+@media (prefers-reduced-motion:reduce){.toast{animation:none}}
+.loading{padding:60px 0;text-align:center;color:var(--soft)}
+table{border-collapse:collapse;width:100%}
+</style>
+</head>
+<body>
+<div class="app" id="app"><div class="loading">Yükleniyor…</div></div>
+<dialog id="dlg"></dialog>
+<div id="toast" aria-live="polite"></div>
+<script src="config.js"></script>
+<script type="module">
+/* =====================================================================
+   Pilates ders takvimi
+   - Demo modu: config.js içinde firebase ayarı yoksa veriler bu tarayıcıda tutulur.
+   - Canlı mod: Firebase (Auth + Firestore) ile herkes kendi hesabıyla girer.
+   ===================================================================== */
+const CFG = window.PILATES_CONFIG || {};
+const DEMO = !CFG.firebase;
+const ADMIN_EMAILS = (CFG.adminEmails || []).map(e => String(e).trim().toLowerCase());
+const HOUR = 36e5;
+const DEFAULTS = {
+  studioName: CFG.studioName || "Pilates Stüdyo",
+  capacity: 5,          // ders kontenjanı
+  minAttendees: 2,      // dersin yapılması için en az kişi
+  autoCancelHours: 12,  // dersten kaç saat önce kişi sayısı kontrol edilir
+  changeHours: 24,      // iptal/değişiklik için son süre (saat)
+  duration: 50          // ders süresi (dk)
+};
+const PKG_MONTHS = { 8: 1, 16: 2, 24: 3 };
+const WD = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
+
+/* ---------- küçük yardımcılar ---------- */
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pad = n => String(n).padStart(2, "0");
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseYmd = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+const parseStart = s => { const [a, b] = s.split("T"); const d = parseYmd(a); const [h, mi] = b.split(":").map(Number); d.setHours(h, mi, 0, 0); return d; };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const weekStart = d => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); return addDays(x, -((x.getDay() + 6) % 7)); };
+const today = () => ymd(new Date());
+const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+const nowIso = () => new Date().toISOString();
+// Paket bitişi: başlangıç + N ay - 1 gün (ör. 3 Kasım → 2 Aralık dahil)
+function addMonthsYmd(s, n) {
+  const d = parseYmd(s), day = d.getDate();
+  const x = new Date(d.getFullYear(), d.getMonth() + n, 1);
+  x.setDate(Math.min(day, new Date(x.getFullYear(), x.getMonth() + 1, 0).getDate()));
+  return ymd(addDays(x, -1));
+}
+const FMT = {
+  full: new Intl.DateTimeFormat("tr-TR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }),
+  dm: new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long" }),
+  dmy: new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long", year: "numeric" }),
+  short: new Intl.DateTimeFormat("tr-TR", { weekday: "short", day: "numeric", month: "short" }),
+  my: new Intl.DateTimeFormat("tr-TR", { month: "long", year: "numeric" }),
+  m: new Intl.DateTimeFormat("tr-TR", { month: "long" }),
+  dt: new Intl.DateTimeFormat("tr-TR", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
+};
+const toDate = v => v instanceof Date ? v : (v.includes("T") ? parseStart(v) : parseYmd(v));
+const fmt = (k, v) => FMT[k].format(toDate(v));
+const hhmm = s => s.split("T")[1];
+class UserError extends Error {}
+const fail = m => { throw new UserError(m); };
+
+/* ---------- durum ---------- */
+const S = { ready: false, me: null, users: {}, packages: {}, slots: {}, bookings: {}, settings: { ...DEFAULTS } };
+const UI = { tab: "calendar", view: "week", cursor: today(), move: null, dlg: null, f: {}, memberQuery: "" };
+const isAdmin = () => S.me?.role === "admin";
+const isAdminUser = u => u.role === "admin" || ADMIN_EMAILS.includes(String(u.email || "").toLowerCase());
+const set = () => ({ ...DEFAULTS, ...S.settings });
+
+/* ---------- iş kuralları ---------- */
+const slotStart = s => parseStart(s.start).getTime();
+const slotEnd = s => slotStart(s) + (s.duration || set().duration) * 60000;
+const headcount = s => new Set([...(s.attendees || []), ...(s.lateCancels || [])]).size;
+const cutoffOf = s => slotStart(s) - set().autoCancelHours * HOUR;
+/* Dersin o anki durumu:
+   open | full | running | done | closed | cancelled | auto_cancelled */
+function slotState(s, now = Date.now()) {
+  if (s.status === "cancelled") return "cancelled";
+  if (s.status === "auto_cancelled") return "auto_cancelled";
+  const n = headcount(s);
+  if (!s.keepOpen && now >= cutoffOf(s) && n < set().minAttendees) return n === 0 ? "closed" : "auto_cancelled";
+  if (now >= slotEnd(s)) return "done";
+  if (now >= slotStart(s)) return "running";
+  if ((s.attendees || []).length >= s.capacity) return "full";
+  return "open";
+}
+const slotVoid = s => !s || ["cancelled", "auto_cancelled"].includes(slotState(s));
+const atRisk = s => !s.keepOpen && ["open", "full"].includes(slotState(s)) && headcount(s) < set().minAttendees && headcount(s) > 0;
+const isLate = s => slotStart(s) - Date.now() < set().changeHours * HOUR;
+const bookingCounts = b => ["booked", "late_cancel"].includes(b.status) && !slotVoid(S.slots[b.slotId]);
+
+function pkgInfo(p) {
+  const bs = Object.values(S.bookings).filter(b => b.packageId === p.id && bookingCounts(b));
+  const now = Date.now();
+  const done = bs.filter(b => b.status === "late_cancel" || slotStart(S.slots[b.slotId]) < now).length;
+  const used = bs.length;
+  const remaining = Math.max(0, p.size - used);
+  const expired = today() > p.expiresAt;
+  const notStarted = today() < p.startDate;
+  const daysLeft = Math.round((parseYmd(p.expiresAt) - parseYmd(today())) / 864e5);
+  return { used, done, planned: used - done, remaining, expired, notStarted, daysLeft, active: !expired && remaining > 0 };
+}
+const userPackages = uid => Object.values(S.packages).filter(p => p.userId === uid).sort((a, b) => b.startDate.localeCompare(a.startDate));
+function pickPackage(uid, s) {
+  const d = s.start.slice(0, 10);
+  return Object.values(S.packages)
+    .filter(p => p.userId === uid && p.startDate <= d && d <= p.expiresAt && pkgInfo(p).remaining > 0)
+    .sort((a, b) => a.expiresAt.localeCompare(b.expiresAt))[0] || null;
+}
+function noCreditReason(uid, s) {
+  const ps = userPackages(uid);
+  if (!ps.length) return "Tanımlı bir paket yok. Paket tanımlanması için hocayla iletişime geçin.";
+  const d = s.start.slice(0, 10);
+  const covering = ps.filter(p => p.startDate <= d && d <= p.expiresAt);
+  if (!covering.length) return "Paketin geçerlilik süresi bu tarihi kapsamıyor.";
+  return "Ders hakkı kalmadı: paketteki tüm dersler seçilmiş.";
+}
+function creditSummary(uid) {
+  const act = userPackages(uid).filter(p => !pkgInfo(p).expired);
+  return { remaining: act.reduce((a, p) => a + pkgInfo(p).remaining, 0), packages: act };
+}
+const myBooking = (s, uid = S.me?.id) => Object.values(S.bookings).find(b => b.slotId === s.id && b.userId === uid && b.status === "booked");
+const userName = id => S.users[id]?.name || (id === S.me?.id ? S.me.name : "Üye");
+
+/* ---------- işlemler (her iki arka uçta aynı) ---------- */
+const ops = {
+  async book(slotId, uid = S.me.id) {
+    const s = S.slots[slotId] || fail("Ders bulunamadı.");
+    const st = slotState(s);
+    if (st === "full") fail("Bu ders dolu.");
+    if (st !== "open") fail("Bu derse artık kayıt alınmıyor.");
+    if (s.attendees.includes(uid)) fail("Bu derse zaten kayıtlı.");
+    const pkg = pickPackage(uid, s) || fail(noCreditReason(uid, s));
+    await B.tx(async t => {
+      const cur = await t.get("slots", slotId);
+      if (!cur || cur.status !== "open") fail("Bu derse artık kayıt alınmıyor.");
+      if (cur.attendees.includes(uid)) fail("Bu derse zaten kayıtlı.");
+      if (cur.attendees.length >= cur.capacity) fail("Bu ders az önce doldu.");
+      t.update("slots", slotId, { attendees: [...cur.attendees, uid] });
+      t.set("bookings", t.newId("bookings"), { userId: uid, slotId, packageId: pkg.id, slotStart: cur.start, status: "booked", createdAt: nowIso(), by: S.me.id });
+    });
+  },
+  async cancel(bookingId, { admin = false } = {}) {
+    const b = S.bookings[bookingId] || fail("Kayıt bulunamadı.");
+    const s = S.slots[b.slotId];
+    const late = !admin && isLate(s);
+    await B.tx(async t => {
+      const cur = await t.get("slots", b.slotId);
+      if (cur) {
+        const patch = { attendees: cur.attendees.filter(x => x !== b.userId) };
+        if (late) patch.lateCancels = [...(cur.lateCancels || []).filter(x => x !== b.userId), b.userId];
+        t.update("slots", b.slotId, patch);
+      }
+      t.update("bookings", bookingId, { status: late ? "late_cancel" : "cancelled", updatedAt: nowIso(), by: S.me.id });
+    });
+    return late;
+  },
+  async move(bookingId, toId, { admin = false } = {}) {
+    const b = S.bookings[bookingId] || fail("Kayıt bulunamadı.");
+    const from = S.slots[b.slotId], to = S.slots[toId] || fail("Ders bulunamadı.");
+    if (toId === b.slotId) fail("Aynı ders seçildi.");
+    if (!admin && isLate(from)) fail(`Değişiklik dersten en geç ${set().changeHours} saat önce yapılabilir.`);
+    if (slotState(to) !== "open") fail(slotState(to) === "full" ? "Seçilen ders dolu." : "Seçilen derse kayıt alınmıyor.");
+    if (to.attendees.includes(b.userId)) fail("Seçilen derse zaten kayıtlı.");
+    const d = to.start.slice(0, 10);
+    let pkg = S.packages[b.packageId];
+    if (!pkg || !(pkg.startDate <= d && d <= pkg.expiresAt)) pkg = pickPackage(b.userId, to) || fail("Paketin geçerlilik süresi bu tarihi kapsamıyor.");
+    await B.tx(async t => {
+      const f = await t.get("slots", b.slotId), n = await t.get("slots", toId);
+      if (!n || n.status !== "open") fail("Seçilen derse kayıt alınmıyor.");
+      if (n.attendees.length >= n.capacity) fail("Seçilen ders az önce doldu.");
+      if (f) t.update("slots", b.slotId, { attendees: f.attendees.filter(x => x !== b.userId) });
+      t.update("slots", toId, { attendees: [...n.attendees, b.userId] });
+      const nid = t.newId("bookings");
+      t.update("bookings", bookingId, { status: "moved", movedTo: nid, updatedAt: nowIso(), by: S.me.id });
+      t.set("bookings", nid, { userId: b.userId, slotId: toId, packageId: pkg.id, slotStart: n.start, status: "booked", movedFrom: bookingId, createdAt: nowIso(), by: S.me.id });
+    });
+  },
+  async cancelSlot(slotId, reason, status = "cancelled") {
+    const bs = Object.values(S.bookings).filter(b => b.slotId === slotId && b.status === "booked");
+    await B.tx(async t => {
+      const cur = await t.get("slots", slotId) || fail("Ders bulunamadı.");
+      if (cur.status !== "open") return;
+      t.update("slots", slotId, { status, cancelReason: reason || "", cancelledAt: nowIso() });
+      bs.forEach(b => t.update("bookings", b.id, { status: "lesson_cancelled", updatedAt: nowIso() }));
+    });
+  },
+  async deleteSlot(slotId) {
+    const s = S.slots[slotId];
+    if (s.attendees.length && s.status === "open") fail("Kayıtlı üye varken ders silinemez. Önce dersi iptal edin.");
+    const bs = Object.values(S.bookings).filter(b => b.slotId === slotId);
+    await B.tx(async t => { t.del("slots", slotId); bs.forEach(b => b.status === "booked" && t.update("bookings", b.id, { status: "lesson_cancelled" })); });
+  },
+  async setKeepOpen(slotId, v) { await B.tx(async t => t.update("slots", slotId, { keepOpen: !!v })); },
+  async createSlots(list) {
+    const have = new Set(Object.values(S.slots).filter(s => s.status === "open").map(s => s.start));
+    const add = list.filter(x => !have.has(x.start));
+    for (let i = 0; i < add.length; i += 400) {
+      const chunk = add.slice(i, i + 400);
+      await B.tx(async t => chunk.forEach(x => t.set("slots", t.newId("slots"), { ...x, status: "open", attendees: [], lateCancels: [], keepOpen: false, createdAt: nowIso() })));
+    }
+    return { added: add.length, skipped: list.length - add.length };
+  },
+  async addPackage(userId, size, startDate) {
+    const p = { userId, size: Number(size), startDate, expiresAt: addMonthsYmd(startDate, PKG_MONTHS[size]), createdAt: nowIso() };
+    await B.tx(async t => t.set("packages", t.newId("packages"), p));
+  },
+  async updatePackage(id, patch) { await B.tx(async t => t.update("packages", id, patch)); },
+  async deletePackage(id) { await B.tx(async t => t.del("packages", id)); },
+  async updateUser(id, patch) { await B.tx(async t => t.update("users", id, patch)); },
+  async saveSettings(patch) { await B.tx(async t => t.set("settings", "main", { ...set(), ...patch })); },
+  // Yönetici açıkken: süresi geçmiş az kişili dersleri kalıcı olarak "otomatik iptal" yap
+  async sweep() {
+    if (!isAdmin()) return;
+    for (const s of Object.values(S.slots)) {
+      if (s.status === "open" && slotState(s) === "auto_cancelled" && !sweeping.has(s.id)) {
+        sweeping.add(s.id);
+        try { await ops.cancelSlot(s.id, `Yetersiz katılım (en az ${set().minAttendees} kişi)`, "auto_cancelled"); } catch (e) { console.warn(e); }
+      }
+    }
+  }
+};
+const sweeping = new Set();
+
+/* ---------- Demo arka ucu (tarayıcıda saklanır) ---------- */
+const LS_KEY = "pilates-demo-v1";
+function seedDemo() {
+  const db = { settings: { main: { ...DEFAULTS, studioName: "Demo Pilates Stüdyo" } }, users: {}, packages: {}, slots: {}, bookings: {} };
+  [["admin", "Hoca (Yönetici)", "admin"], ["u1", "Sen (Demo Üye)", "member"], ["u2", "Ayşe Yılmaz", "member"], ["u3", "Mehmet Kaya", "member"],
+   ["u4", "Zeynep Demir", "member"], ["u5", "Elif Şahin", "member"], ["u6", "Can Arslan", "member"]]
+    .forEach(([id, name, role], i) => db.users[id] = { id, name, role, email: `${id}@demo.local`, phone: `0555 000 00 ${pad(i)}`, createdAt: nowIso() });
+  const t0 = new Date(); t0.setHours(0, 0, 0, 0);
+  const pk = (id, userId, size, off) => { const s = ymd(addDays(t0, off)); db.packages[id] = { id, userId, size, startDate: s, expiresAt: addMonthsYmd(s, PKG_MONTHS[size]), createdAt: nowIso() }; };
+  pk("p1", "u1", 8, -6); pk("p2", "u2", 16, -20); pk("p3", "u3", 24, -12); pk("p4", "u4", 8, -24); pk("p5", "u5", 16, -3); pk("p6", "u6", 8, -1);
+  const plan = { 0: ["09:00", "18:00", "19:00"], 1: ["10:00", "19:30"], 2: ["09:00", "18:00", "19:00"], 3: ["10:00", "19:30"], 4: ["09:00", "18:00"], 5: ["11:00"] };
+  const ws = addDays(weekStart(t0), -14);
+  const used = {}; let k = 7;
+  const rnd = () => (k = (k * 9301 + 49297) % 233280) / 233280;
+  for (let i = 0; i < 49; i++) {
+    const d = addDays(ws, i), wd = (d.getDay() + 6) % 7;
+    for (const tm of plan[wd] || []) {
+      const id = "s" + ymd(d).replaceAll("-", "") + tm.replace(":", "");
+      const s = { id, start: `${ymd(d)}T${tm}`, duration: 50, capacity: 5, status: "open", attendees: [], lateCancels: [], keepOpen: false, createdAt: nowIso() };
+      db.slots[id] = s;
+      const want = Math.floor(rnd() * 6);
+      const pool = ["u2", "u3", "u4", "u5", "u6", "u1"].sort(() => rnd() - .5);
+      for (const uid of pool) {
+        if (s.attendees.length >= want) break;
+        if (uid === "u1" && rnd() < .55) continue;
+        const p = Object.values(db.packages).find(p => p.userId === uid && p.startDate <= ymd(d) && ymd(d) <= p.expiresAt);
+        if (!p || (used[p.id] || 0) >= p.size - (uid === "u1" ? 3 : 0)) continue;
+        used[p.id] = (used[p.id] || 0) + 1;
+        s.attendees.push(uid);
+        const bid = "b" + rid();
+        db.bookings[bid] = { id: bid, userId: uid, slotId: id, packageId: p.id, slotStart: s.start, status: "booked", createdAt: nowIso(), by: uid };
+      }
+    }
+  }
+  // örnek: hocanın iptal ettiği bir ders
+  const later = Object.values(db.slots).filter(s => parseStart(s.start) > addDays(t0, 3)).sort((a, b) => a.start.localeCompare(b.start))[2];
+  if (later) {
+    later.status = "cancelled"; later.cancelReason = "Hoca o saatte müsait değil";
+    Object.values(db.bookings).filter(b => b.slotId === later.id).forEach(b => b.status = "lesson_cancelled");
+  }
+  return db;
+}
+const LocalBackend = {
+  db: null,
+  load() {
+    try { this.db = JSON.parse(localStorage.getItem(LS_KEY)); } catch { this.db = null; }
+    if (!this.db || !this.db.slots) this.db = seedDemo();
+  },
+  save() { try { localStorage.setItem(LS_KEY, JSON.stringify(this.db)); } catch {} },
+  publish() {
+    const c = o => JSON.parse(JSON.stringify(o));
+    S.users = c(this.db.users); S.packages = c(this.db.packages); S.slots = c(this.db.slots); S.bookings = c(this.db.bookings);
+    S.settings = { ...DEFAULTS, ...(this.db.settings.main || {}) };
+    if (S.me) S.me = S.users[S.me.id] || null;
+    schedule();
+  },
+  async init() {
+    this.load(); this.save();
+    let uid = null; try { uid = sessionStorage.getItem("pilates-demo-user"); } catch {}
+    S.me = uid ? this.db.users[uid] || null : null;
+    S.ready = true; this.publish();
+  },
+  async demoLogin(uid) { try { sessionStorage.setItem("pilates-demo-user", uid); } catch {} S.me = this.db.users[uid]; UI.tab = "calendar"; this.publish(); },
+  async signOut() { try { sessionStorage.removeItem("pilates-demo-user"); } catch {} S.me = null; UI.move = null; this.publish(); },
+  async reset() { this.db = seedDemo(); this.save(); this.publish(); },
+  async addMember(name, phone) { const id = "u" + rid(); this.db.users[id] = { id, name, phone, role: "member", email: "", createdAt: nowIso() }; this.save(); this.publish(); return id; },
+  async tx(fn) {
+    const writes = [];
+    const t = {
+      get: async (c, id) => this.db[c][id] ? JSON.parse(JSON.stringify(this.db[c][id])) : null,
+      set: (c, id, d) => writes.push(["set", c, id, d]),
+      update: (c, id, d) => writes.push(["update", c, id, d]),
+      del: (c, id) => writes.push(["del", c, id]),
+      newId: () => rid()
+    };
+    await fn(t);
+    for (const [op, c, id, d] of writes) {
+      if (op === "set") this.db[c][id] = { ...JSON.parse(JSON.stringify(d)), id };
+      else if (op === "update") { if (!this.db[c][id]) fail("Kayıt bulunamadı."); Object.assign(this.db[c][id], JSON.parse(JSON.stringify(d))); }
+      else delete this.db[c][id];
+    }
+    this.save(); this.publish();
+  }
+};
+
+/* ---------- Firebase arka ucu ---------- */
+const FirebaseBackend = {
+  async init() {
+    const v = "10.12.2", base = `https://www.gstatic.com/firebasejs/${v}/`;
+    const [app, auth, fs] = await Promise.all([import(base + "firebase-app.js"), import(base + "firebase-auth.js"), import(base + "firebase-firestore.js")]);
+    this.fa = auth; this.fs = fs;
+    const a = app.initializeApp(CFG.firebase);
+    this.auth = auth.getAuth(a); this.db = fs.getFirestore(a);
+    this.unsubs = [];
+    auth.onAuthStateChanged(this.auth, u => this.onUser(u).catch(e => { console.error(e); toast(errText(e), true); }));
+  },
+  async onUser(u) {
+    this.unsubs.forEach(f => f()); this.unsubs = [];
+    S.users = {}; S.packages = {}; S.slots = {}; S.bookings = {};
+    if (!u) { S.me = null; S.ready = true; schedule(); return; }
+    const { doc, getDoc, setDoc } = this.fs;
+    const ref = doc(this.db, "users", u.uid);
+    let snap = await getDoc(ref);
+    if (!snap.exists()) {
+      const p = this.pending || {};
+      await setDoc(ref, { name: p.name || u.email.split("@")[0], phone: p.phone || "", email: u.email, role: "member", createdAt: nowIso() });
+      snap = await getDoc(ref);
+    }
+    const admin = ADMIN_EMAILS.includes((u.email || "").toLowerCase());
+    S.me = { id: u.uid, ...snap.data(), role: admin ? "admin" : "member" };
+    S.users[u.uid] = S.me;
+    this.subscribe(u.uid, admin);
+    S.ready = true; schedule();
+  },
+  subscribe(uid, admin) {
+    const { doc, collection, query, where, onSnapshot } = this.fs;
+    const err = e => { console.error(e); toast("Veri okunamadı: " + (e.code || e.message), true); };
+    const coll = (name, q, target) => this.unsubs.push(onSnapshot(q, snap => {
+      const m = {}; snap.forEach(d => m[d.id] = { id: d.id, ...d.data() }); S[target] = m;
+      if (target === "users" && S.me) { S.users[S.me.id] = { ...S.users[S.me.id], ...S.me, ...(m[S.me.id] || {}), role: S.me.role }; }
+      schedule();
+    }, err));
+    this.unsubs.push(onSnapshot(doc(this.db, "settings", "main"), d => { S.settings = { ...DEFAULTS, ...(d.exists() ? d.data() : {}) }; schedule(); }, err));
+    const since = ymd(addDays(new Date(), -120));
+    coll("slots", query(collection(this.db, "slots"), where("start", ">=", since)), "slots");
+    if (admin) {
+      coll("users", collection(this.db, "users"), "users");
+      coll("packages", collection(this.db, "packages"), "packages");
+      coll("bookings", collection(this.db, "bookings"), "bookings");
+    } else {
+      this.unsubs.push(onSnapshot(doc(this.db, "users", uid), d => { if (d.exists()) { S.me = { ...S.me, ...d.data(), id: uid, role: "member" }; S.users[uid] = S.me; schedule(); } }, err));
+      coll("packages", query(collection(this.db, "packages"), where("userId", "==", uid)), "packages");
+      coll("bookings", query(collection(this.db, "bookings"), where("userId", "==", uid)), "bookings");
+    }
+  },
+  async signIn(email, pw) { await this.fa.signInWithEmailAndPassword(this.auth, email, pw); },
+  async signUp(name, phone, email, pw) { this.pending = { name, phone }; await this.fa.createUserWithEmailAndPassword(this.auth, email, pw); },
+  async reset(email) { await this.fa.sendPasswordResetEmail(this.auth, email); },
+  async signOut() { UI.move = null; await this.fa.signOut(this.auth); },
+  async tx(fn) {
+    const { runTransaction, doc, collection } = this.fs;
+    const strip = d => { const x = { ...d }; delete x.id; return x; };
+    await runTransaction(this.db, async tr => {
+      const t = {
+        get: async (c, id) => { const s = await tr.get(doc(this.db, c, id)); return s.exists() ? { id: s.id, ...s.data() } : null; },
+        set: (c, id, d) => tr.set(doc(this.db, c, id), strip(d)),
+        update: (c, id, d) => tr.update(doc(this.db, c, id), strip(d)),
+        del: (c, id) => tr.delete(doc(this.db, c, id)),
+        newId: c => doc(collection(this.db, c)).id
+      };
+      await fn(t);
+    });
+  }
+};
+const B = DEMO ? LocalBackend : FirebaseBackend;
+
+/* ---------- çizim ---------- */
+let raf = 0;
+function schedule() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
+function toast(msg, err = false) {
+  const el = document.createElement("div"); el.className = "toast" + (err ? " err" : ""); el.textContent = msg;
+  $("#toast").append(el); setTimeout(() => el.remove(), err ? 5200 : 3200);
+}
+function errText(e) {
+  if (e instanceof UserError) return e.message;
+  const map = {
+    "auth/invalid-credential": "E-posta veya şifre hatalı.", "auth/wrong-password": "E-posta veya şifre hatalı.", "auth/user-not-found": "E-posta veya şifre hatalı.",
+    "auth/email-already-in-use": "Bu e-posta ile zaten kayıt var. Giriş yapmayı deneyin.", "auth/weak-password": "Şifre en az 6 karakter olmalı.",
+    "auth/invalid-email": "E-posta adresi geçersiz.", "auth/too-many-requests": "Çok fazla deneme yapıldı, biraz sonra tekrar deneyin.",
+    "permission-denied": "Bu işlem için yetkiniz yok."
+  };
+  return map[e?.code] || e?.message || "Bir hata oluştu.";
+}
+const fv = (k, d) => UI.f[k] ?? d;
+
+function render() {
+  const app = $("#app");
+  if (!S.ready) { app.innerHTML = `<div class="loading">Yükleniyor…</div>`; return; }
+  if (!S.me) { app.innerHTML = loginView(); closeDlg(true); return; }
+  if (isAdmin()) queueMicrotask(() => ops.sweep());
+  const tabs = isAdmin()
+    ? [["calendar", "Takvim"], ["members", "Üyeler"], ["program", "Ders programı"], ["settings", "Ayarlar"]]
+    : [["calendar", "Takvim"], ["mine", "Derslerim"]];
+  if (!tabs.some(t => t[0] === UI.tab)) UI.tab = "calendar";
+  const body = { calendar: calendarView, mine: mineView, members: membersView, program: programView, settings: settingsView }[UI.tab]();
+  const html = `${header()}
+    <nav class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="${UI.tab === k}" data-act="tab" data-v="${k}">${l}</button>`).join("")}</nav>
+    ${DEMO ? `<div class="banner info"><span><b>Demo modu:</b> veriler sadece bu tarayıcıda tutulur. Gerçek kullanım için Firebase kurulumu gerekir (README).</span></div>` : ""}
+    ${body}`;
+  const active = document.activeElement;
+  const typing = active && app.contains(active) && /INPUT|SELECT|TEXTAREA/.test(active.tagName) && active.type !== "checkbox";
+  if (!typing) app.innerHTML = html;
+  renderDlg();
+}
+
+function header() {
+  const me = S.me;
+  let credit = "";
+  if (!isAdmin()) {
+    const c = creditSummary(me.id);
+    credit = c.packages.length
+      ? `<span class="pill ${c.remaining ? "brand" : "warn"}" title="Seçebileceğin ders sayısı">Kalan hak: ${c.remaining}</span>`
+      : `<span class="pill warn">Paket yok</span>`;
+  }
+  return `<header class="top">
+    <div class="brand"><div class="logo" aria-hidden="true">P</div><div><h1>${esc(set().studioName)}</h1><div class="small">Ders takvimi</div></div></div>
+    <div class="who">${credit}<span class="pill ${isAdmin() ? "mine" : ""}">${esc(me.name)}${isAdmin() ? " · Yönetici" : ""}</span>
+      <button class="btn sm" data-act="logout">Çıkış</button></div>
+  </header>`;
+}
+
+function loginView() {
+  if (DEMO) {
+    const us = Object.values(LocalBackend.db.users);
+    return `<div class="login">
+      <div class="brand"><div class="logo">P</div><div><h1>${esc(set().studioName)}</h1><div class="small">Ders takvimi · Demo</div></div></div>
+      <div class="card stack"><h2>Kim olarak gireceksin?</h2>
+        <p class="small">Demo modunda hesap gerekmez. Hocanın ekranını görmek için “Hoca (Yönetici)” ile gir.</p>
+        <div class="demo-users">${us.map(u => `<button class="item" data-act="demo-login" data-id="${u.id}"><span class="main"><b>${esc(u.name)}</b><span class="small">${u.role === "admin" ? "Yönetim paneli" : "Üye"}</span></span><span>›</span></button>`).join("")}</div>
+      </div></div>`;
+  }
+  const mode = UI.authMode || "in";
+  return `<div class="login">
+    <div class="brand"><div class="logo">P</div><div><h1>${esc(set().studioName)}</h1><div class="small">Ders takvimi</div></div></div>
+    <div class="card stack">
+      <div class="seg" role="group"><button aria-pressed="${mode === "in"}" data-act="auth-mode" data-v="in">Giriş yap</button><button aria-pressed="${mode === "up"}" data-act="auth-mode" data-v="up">Kayıt ol</button></div>
+      <form class="stack" data-form="${mode === "in" ? "signin" : "signup"}">
+        ${mode === "up" ? `<label class="f">Ad soyad<input type="text" name="name" required autocomplete="name"></label>
+          <label class="f">Telefon<input type="tel" name="phone" autocomplete="tel"></label>` : ""}
+        <label class="f">E-posta<input type="email" name="email" required autocomplete="email"></label>
+        <label class="f">Şifre<input type="password" name="pw" required minlength="6" autocomplete="${mode === "in" ? "current-password" : "new-password"}"></label>
+        <button class="btn primary block" type="submit">${mode === "in" ? "Giriş yap" : "Kayıt ol"}</button>
+        ${mode === "in" ? `<button class="btn ghost sm" type="button" data-act="pw-reset">Şifremi unuttum</button>` : `<p class="small">Kayıttan sonra hocan sana paket tanımladığında ders seçebilirsin.</p>`}
+      </form>
+    </div></div>`;
+}
+
+/* ----- takvim ----- */
+function slotLabel(s, st, mine) {
+  const free = s.capacity - s.attendees.length;
+  const base = { open: `${free} boş yer`, full: "Dolu", cancelled: "İptal edildi", auto_cancelled: "İptal (az katılım)", closed: "Kayıt kapandı", done: "Tamamlandı", running: "Devam ediyor" }[st];
+  return mine ? `✓ Kayıtlısın · ${base}` : base;
+}
+function slotCard(s) {
+  const st = slotState(s), mine = !isAdmin() && myBooking(s);
+  const dots = Array.from({ length: s.capacity }, (_, i) => `<i class="dot ${i < s.attendees.length ? "on" : ""}"></i>`).join("");
+  return `<button class="slot st-${st} ${mine ? "mine" : ""} ${atRisk(s) ? "risk" : ""}" data-act="slot" data-id="${s.id}"
+     aria-label="${esc(fmt("full", s.start))} ${hhmm(s.start)}, ${esc(slotLabel(s, st, mine))}">
+    <span class="t">${hhmm(s.start)}</span><span class="dots" aria-hidden="true">${dots}</span>
+    <span class="lbl">${slotLabel(s, st, mine)}${isAdmin() ? ` · ${s.attendees.length}/${s.capacity}` : ""}</span></button>`;
+}
+const slotsOn = d => Object.values(S.slots).filter(s => s.start.startsWith(d)).sort((a, b) => a.start.localeCompare(b.start));
+
+function calendarView() {
+  const cur = parseYmd(UI.cursor);
+  const years = []; for (let y = new Date().getFullYear() - 1; y <= new Date().getFullYear() + 2; y++) years.push(y);
+  let rangeLabel, grid;
+  if (UI.view === "week") {
+    const ws = weekStart(cur), we = addDays(ws, 6);
+    rangeLabel = `${fmt("dm", ws)} – ${fmt("dmy", we)}`;
+    grid = `<div class="week">${Array.from({ length: 7 }, (_, i) => {
+      const d = addDays(ws, i), k = ymd(d), list = slotsOn(k);
+      return `<section class="day ${k === today() ? "today" : ""} ${k < today() ? "past" : ""}" aria-label="${esc(fmt("full", d))}">
+        <div class="dhead"><b>${WD[i]} ${d.getDate()}</b><span class="small">${esc(FMT.m.format(d))}</span></div>
+        <div class="slots">${list.length ? list.map(slotCard).join("") : `<span class="empty">Ders yok</span>`}</div></section>`;
+    }).join("")}</div>`;
+  } else {
+    const first = new Date(cur.getFullYear(), cur.getMonth(), 1);
+    const gs = weekStart(first);
+    rangeLabel = FMT.my.format(first);
+    const cells = [];
+    for (let i = 0; i < 42; i++) {
+      const d = addDays(gs, i); if (i >= 35 && d.getMonth() !== first.getMonth()) break;
+      const k = ymd(d), list = slotsOn(k);
+      const free = list.filter(s => slotState(s) === "open").reduce((a, s) => a + s.capacity - s.attendees.length, 0);
+      const mine = !isAdmin() && list.some(s => myBooking(s));
+      cells.push(`<button class="mcell ${d.getMonth() !== first.getMonth() ? "out" : ""} ${k === today() ? "today" : ""}" data-act="goto-week" data-v="${k}" aria-label="${esc(fmt("full", d))}: ${list.length} ders">
+        <b>${d.getDate()}</b>
+        <span class="mdots">${list.map(s => `<i class="md st-${slotState(s)} ${!isAdmin() && myBooking(s) ? "mine" : ""}"></i>`).join("")}</span>
+        ${list.length ? `<span class="small">${list.length} ders${free ? ` · ${free} boş` : ""}${mine ? " · senin dersin" : ""}</span>` : ""}
+      </button>`);
+    }
+    grid = `<div class="month">${WD.map(w => `<div class="mh">${w}</div>`).join("")}${cells.join("")}</div>`;
+  }
+  const mv = UI.move && S.bookings[UI.move.bookingId];
+  const moveBanner = mv ? `<div class="banner mine"><span><b>${UI.move.admin ? esc(userName(mv.userId)) + " adlı üyenin" : "Senin"}</b> ${esc(fmt("short", mv.slotStart))} ${hhmm(mv.slotStart)} dersini taşıyorsun. Takvimden yeni bir saat seç.</span><button class="btn sm" data-act="move-cancel">Vazgeç</button></div>` : "";
+  let memberNote = "";
+  if (!isAdmin()) {
+    const c = creditSummary(S.me.id);
+    const soon = c.packages.find(p => { const i = pkgInfo(p); return i.remaining > 0 && i.daysLeft <= 7; });
+    if (!c.packages.length) memberNote = `<div class="banner warn"><span>Henüz tanımlı bir paketin yok. Hocan paketini tanımladığında ders seçebilirsin.</span></div>`;
+    else if (soon) memberNote = `<div class="banner warn"><span>Paketinin bitmesine ${pkgInfo(soon).daysLeft} gün kaldı ve ${pkgInfo(soon).remaining} ders hakkın kullanılmadı.</span></div>`;
+  }
+  return `${moveBanner}${memberNote}
+    <div class="card stack">
+      <div class="toolbar">
+        <div class="nav">
+          <button class="btn sm" data-act="nav" data-v="-1" aria-label="Önceki">‹</button>
+          <button class="btn sm" data-act="nav" data-v="0">Bugün</button>
+          <button class="btn sm" data-act="nav" data-v="1" aria-label="Sonraki">›</button>
+          <span class="range">${esc(rangeLabel)}</span>
+        </div>
+        <div class="nav">
+          <select data-act="jump-month" aria-label="Ay">${Array.from({ length: 12 }, (_, m) => `<option value="${m}" ${m === cur.getMonth() ? "selected" : ""}>${esc(FMT.m.format(new Date(2026, m, 1)))}</option>`).join("")}</select>
+          <select data-act="jump-year" aria-label="Yıl">${years.map(y => `<option ${y === cur.getFullYear() ? "selected" : ""}>${y}</option>`).join("")}</select>
+          <div class="seg" role="group" aria-label="Görünüm"><button aria-pressed="${UI.view === "week"}" data-act="view" data-v="week">Hafta</button><button aria-pressed="${UI.view === "month"}" data-act="view" data-v="month">Ay</button></div>
+        </div>
+      </div>
+      <div class="legend small"><span class="pill free">Boş yer var</span><span class="pill full">Dolu</span>${isAdmin() ? "" : `<span class="pill mine">Senin dersin</span>`}<span class="pill cancel">İptal</span><span class="pill muted">Geçmiş / kapalı</span></div>
+      ${grid}
+    </div>`;
+}
+
+/* ----- ders penceresi ----- */
+function slotDialog(id) {
+  const s = S.slots[id]; if (!s) return `<div class="dlg"><p>Ders bulunamadı.</p></div>`;
+  const st = slotState(s), cfg = set();
+  const mine = !isAdmin() && myBooking(s);
+  const n = s.attendees.length;
+  const seats = Array.from({ length: s.capacity }, (_, i) => {
+    const uid = s.attendees[i];
+    if (!uid) return `<span class="seat" title="Boş">boş</span>`;
+    const me = uid === S.me.id;
+    const label = isAdmin() ? esc(userName(uid).split(" ").map(w => w[0]).join("").slice(0, 2)) : me ? "Sen" : "✓";
+    return `<span class="seat on ${me ? "me" : ""}" title="${isAdmin() ? esc(userName(uid)) : me ? "Sen" : "Dolu"}">${label}</span>`;
+  }).join("");
+  const stPill = { open: `<span class="pill free">${s.capacity - n} boş yer</span>`, full: `<span class="pill full">Dolu</span>`, cancelled: `<span class="pill cancel">Hoca iptal etti</span>`,
+    auto_cancelled: `<span class="pill cancel">Yetersiz katılım: iptal</span>`, closed: `<span class="pill muted">Kayıt kapandı</span>`, done: `<span class="pill muted">Tamamlandı</span>`, running: `<span class="pill muted">Devam ediyor</span>` }[st];
+  const notes = [];
+  if (st === "cancelled") notes.push(`<div class="banner warn"><span>Bu ders iptal edildi${s.cancelReason ? `: ${esc(s.cancelReason)}` : ""}. Kayıtlı üyelerin hakları iade edildi.</span></div>`);
+  if (st === "auto_cancelled") notes.push(`<div class="banner warn"><span>Belirlenen saate kadar en az ${cfg.minAttendees} kişi olmadığı için ders otomatik iptal oldu. Ders hakları iade edildi.</span></div>`);
+  if (atRisk(s)) notes.push(`<div class="banner warn"><span>Bu ders en az ${cfg.minAttendees} kişiyle yapılır. <b>${esc(FMT.dt.format(new Date(cutoffOf(s))))}</b> saatine kadar ${cfg.minAttendees}. kişi gelmezse otomatik iptal olur ve hak iade edilir.</span></div>`);
+  if (s.keepOpen && headcount(s) < cfg.minAttendees && !slotVoid(s)) notes.push(`<div class="banner info"><span>Hoca bu dersi az kişiyle de yapacak (otomatik iptal kapalı).</span></div>`);
+
+  let actions = "";
+  if (!isAdmin()) {
+    const late = isLate(s);
+    if (mine && !slotVoid(s) && slotStart(s) > Date.now()) {
+      actions = `<div class="stack">
+        <div class="banner mine"><span><b>Bu derse kayıtlısın.</b></span></div>
+        ${late ? `<p class="small">Derse ${cfg.changeHours} saatten az kaldı: iptal edersen bu ders hakkın <b>yanar</b>, başka saate alamazsın.</p>`
+               : `<p class="small">${esc(FMT.dt.format(new Date(slotStart(s) - cfg.changeHours * HOUR)))} saatine kadar ücretsiz iptal edebilir veya başka saate alabilirsin; hakkın yanmaz.</p>`}
+        <div class="row">
+          <button class="btn danger" data-act="cancel-booking" data-id="${mine.id}">${late ? "İptal et (hak yanar)" : "Dersi iptal et"}</button>
+          <button class="btn" data-act="move-start" data-id="${mine.id}" ${late ? "disabled" : ""}>Başka saate al</button>
+        </div></div>`;
+    } else if (UI.move && !mine) {
+      actions = st === "open" ? `<button class="btn primary block" data-act="move-here" data-id="${s.id}">Dersimi bu saate taşı</button>` : `<p class="small">Bu derse taşıma yapılamaz.</p>`;
+    } else if (st === "open" && !mine) {
+      const pkg = pickPackage(S.me.id, s);
+      if (pkg) {
+        const left = pkgInfo(pkg).remaining - 1;
+        actions = `<div class="stack">${late ? `<p class="small">Not: derse ${cfg.changeHours} saatten az kaldığı için kaydolduktan sonra iptal edersen hakkın yanar.</p>` : ""}
+          <button class="btn primary block" data-act="book" data-id="${s.id}">Bu derse kaydol</button>
+          <p class="small">${pkg.size} derslik paketinden düşülecek. Kaydolduktan sonra ${left} ders hakkın kalacak.</p></div>`;
+      } else actions = `<div class="banner warn"><span>${esc(noCreditReason(S.me.id, s))}</span></div>`;
+    }
+  } else {
+    const members = Object.values(S.users).filter(u => !isAdminUser(u) && !s.attendees.includes(u.id)).sort((a, b) => a.name.localeCompare(b.name, "tr"));
+    const bookingOf = uid => Object.values(S.bookings).find(b => b.slotId === s.id && b.userId === uid && b.status === "booked");
+    const future = slotStart(s) > Date.now();
+    actions = `<div class="stack">
+      <h3>Katılımcılar (${n}/${s.capacity})</h3>
+      ${n ? `<div class="list">${s.attendees.map(uid => { const b = bookingOf(uid); return `<div class="item"><div class="main"><b>${esc(userName(uid))}</b><span class="small">${esc(S.users[uid]?.phone || "")}</span></div>
+        ${b && !slotVoid(s) ? `<div class="row"><button class="btn sm" data-act="move-start" data-id="${b.id}" data-admin="1">Taşı</button><button class="btn sm danger" data-act="admin-remove" data-id="${b.id}">Çıkar</button></div>` : ""}</div>`; }).join("")}</div>` : `<p class="small">Henüz kimse kayıtlı değil.</p>`}
+      ${(s.lateCancels || []).length ? `<p class="small">Geç iptal (hakkı yandı): ${s.lateCancels.map(u => esc(userName(u))).join(", ")}</p>` : ""}
+      ${UI.move && UI.move.admin && st === "open" ? `<button class="btn primary block" data-act="move-here" data-id="${s.id}">Üyeyi bu saate taşı</button>` : ""}
+      ${st === "open" && members.length ? `<form class="row" data-form="admin-add" data-id="${s.id}"><select name="uid" class="grow" aria-label="Üye seç" style="flex:1;width:auto">${members.map(u => `<option value="${u.id}">${esc(u.name)} (${creditSummary(u.id).remaining} hak)</option>`).join("")}</select><button class="btn primary" type="submit">Üye ekle</button></form>` : ""}
+      ${s.status === "open" && future ? `<hr>
+        <label class="row" style="font-weight:600"><input type="checkbox" data-act="keep-open" data-id="${s.id}" ${s.keepOpen ? "checked" : ""}> Az kişiyle de yap (otomatik iptal etme)</label>
+        <form class="stack" data-form="cancel-slot" data-id="${s.id}"><label class="f">İptal nedeni (üyeler görür)<input type="text" name="reason" placeholder="Ör. Hoca o saatte müsait değil"></label>
+          <button class="btn danger" type="submit">Dersi iptal et (haklar iade edilir)</button></form>` : ""}
+      ${(s.status !== "open" || !n) ? `<button class="btn ghost sm danger" data-act="delete-slot" data-id="${s.id}">Dersi takvimden sil</button>` : ""}
+    </div>`;
+  }
+  return `<div class="dlg">
+    <div class="dlg-h"><div><h2>${esc(fmt("full", s.start))}</h2><p class="small">${hhmm(s.start)} · ${s.duration || cfg.duration} dk · Kontenjan ${s.capacity}</p></div><button class="x" data-act="close" aria-label="Kapat">×</button></div>
+    <div class="row">${stPill}${mine ? `<span class="pill mine">Kayıtlısın</span>` : ""}</div>
+    <div class="seats" aria-label="${n} / ${s.capacity} dolu">${seats}</div>
+    ${notes.join("")}${actions}
+  </div>`;
+}
+
+/* ----- derslerim (üye) ----- */
+const BSTATUS = { booked: ["Planlı", "mine"], cancelled: ["İptal edildi (hak iade)", "muted"], late_cancel: ["Geç iptal (hak yandı)", "cancel"], lesson_cancelled: ["Ders iptal oldu (hak iade)", "warn"], moved: ["Başka saate alındı", "muted"] };
+function bookingRow(b, { admin = false, showName = false } = {}) {
+  const s = S.slots[b.slotId];
+  let [label, cls] = BSTATUS[b.status] || [b.status, "muted"];
+  if (b.status === "booked" && s) {
+    const st = slotState(s);
+    if (st === "auto_cancelled" || st === "cancelled") [label, cls] = ["Ders iptal oldu (hak iade)", "warn"];
+    else if (st === "done" || st === "running") [label, cls] = ["Katıldı", "free"];
+  }
+  const canAct = b.status === "booked" && s && !slotVoid(s) && slotStart(s) > Date.now();
+  return `<div class="item"><div class="main"><b>${esc(fmt("short", b.slotStart))} · ${hhmm(b.slotStart)}</b>${showName ? `<span class="small">${esc(userName(b.userId))}</span>` : ""}<span><span class="pill ${cls}">${label}</span></span></div>
+    ${canAct ? `<div class="row">${admin
+      ? `<button class="btn sm" data-act="move-start" data-id="${b.id}" data-admin="1">Taşı</button><button class="btn sm danger" data-act="admin-remove" data-id="${b.id}">Çıkar</button>`
+      : `<button class="btn sm" data-act="slot" data-id="${b.slotId}">Detay / İptal</button>`}</div>` : ""}</div>`;
+}
+function pkgCard(p, { admin = false } = {}) {
+  const i = pkgInfo(p);
+  const status = i.expired ? (i.remaining ? `<span class="pill cancel">Süresi doldu · ${i.remaining} ders yandı</span>` : `<span class="pill muted">Tamamlandı</span>`)
+    : i.notStarted ? `<span class="pill muted">Henüz başlamadı</span>`
+    : i.remaining ? `<span class="pill brand">Aktif · ${i.daysLeft} gün kaldı</span>` : `<span class="pill muted">Tüm dersler seçildi</span>`;
+  return `<div class="item pkg" style="display:grid">
+    <div class="row between"><b>${p.size} derslik paket</b>${status}</div>
+    <div class="bar" aria-hidden="true"><i class="u" style="width:${i.done / p.size * 100}%"></i><i class="p" style="width:${i.planned / p.size * 100}%"></i></div>
+    <div class="small">${i.done} yapıldı · ${i.planned} planlı · <b>${i.remaining} hak kaldı</b></div>
+    <div class="small">Geçerlilik: ${esc(fmt("dmy", p.startDate))} – ${esc(fmt("dmy", p.expiresAt))} (${PKG_MONTHS[p.size] || "?"} ay)</div>
+    ${admin ? `<form class="row" data-form="pkg-edit" data-id="${p.id}"><label class="f grow">Bitiş tarihi<input type="date" name="expiresAt" value="${p.expiresAt}"></label>
+      <button class="btn sm" type="submit">Kaydet</button><button class="btn sm danger" type="button" data-act="pkg-delete" data-id="${p.id}">Sil</button></form>` : ""}
+  </div>`;
+}
+function mineView() {
+  const uid = S.me.id;
+  const pk = userPackages(uid);
+  const bs = Object.values(S.bookings).filter(b => b.userId === uid && b.status !== "moved").sort((a, b) => a.slotStart.localeCompare(b.slotStart));
+  const now = Date.now();
+  const up = bs.filter(b => b.status === "booked" && S.slots[b.slotId] && slotStart(S.slots[b.slotId]) > now && !slotVoid(S.slots[b.slotId]));
+  const past = bs.filter(b => !up.includes(b)).reverse().slice(0, 40);
+  const cfg = set();
+  return `<div class="stack">
+    <div class="card stack"><h2>Paketlerim</h2>${pk.length ? `<div class="list">${pk.map(p => pkgCard(p)).join("")}</div>` : `<p class="small">Tanımlı paketin yok.</p>`}
+      <p class="small">Kurallar: 8 derslik paket 1 ayda, 16 derslik 2 ayda, 24 derslik 3 ayda bitmelidir. Dersi en geç ${cfg.changeHours} saat önce iptal edersen veya değiştirirsen hakkın yanmaz. Bir derste ${cfg.autoCancelHours} saat kala ${cfg.minAttendees} kişi yoksa ders otomatik iptal olur ve hakkın iade edilir.</p></div>
+    <div class="card stack"><h2>Yaklaşan derslerim</h2>${up.length ? `<div class="list">${up.map(b => bookingRow(b)).join("")}</div>` : `<p class="small">Planlı dersin yok. Takvimden ders seçebilirsin.</p>`}</div>
+    <div class="card stack"><h2>Geçmiş</h2>${past.length ? `<div class="list">${past.map(b => bookingRow(b)).join("")}</div>` : `<p class="small">Henüz geçmiş ders yok.</p>`}</div>
+  </div>`;
+}
+
+/* ----- üyeler (yönetici) ----- */
+function membersView() {
+  const q = (UI.memberQuery || "").toLocaleLowerCase("tr");
+  const list = Object.values(S.users).filter(u => !isAdminUser(u) && (!q || `${u.name} ${u.phone} ${u.email}`.toLocaleLowerCase("tr").includes(q))).sort((a, b) => a.name.localeCompare(b.name, "tr"));
+  return `<div class="card stack">
+    <div class="row between"><h2>Üyeler (${list.length})</h2></div>
+    <input type="text" data-k="memberQuery" placeholder="İsim, telefon veya e-posta ara" value="${esc(UI.memberQuery)}" aria-label="Üye ara">
+    ${DEMO ? `<form class="row" data-form="add-member"><input type="text" name="name" placeholder="Yeni üye adı" required style="flex:2;width:auto"><input type="tel" name="phone" placeholder="Telefon" style="flex:1;width:auto"><button class="btn primary" type="submit">Üye ekle</button></form>`
+           : `<p class="small">Üyeler bu sayfadan kendileri kayıt olur. Kayıt olan üyeye buradan paket tanımlarsın.</p>`}
+    <div class="list">${list.map(u => {
+      const c = creditSummary(u.id); const act = c.packages.find(p => pkgInfo(p).active) || c.packages[0];
+      const sub = act ? `${act.size}'lik paket · ${pkgInfo(act).remaining} hak · ${esc(fmt("dm", act.expiresAt))}'e kadar` : "Aktif paket yok";
+      return `<button class="item" data-act="member" data-id="${u.id}"><span class="main"><b>${esc(u.name)}</b><span class="small">${esc(u.phone || u.email || "")}</span></span>
+        <span class="pill ${act ? (c.remaining ? "brand" : "muted") : "warn"}">${sub}</span></button>`;
+    }).join("") || `<p class="small">Üye bulunamadı.</p>`}</div>
+  </div>`;
+}
+function memberDialog(uid) {
+  const u = S.users[uid]; if (!u) return `<div class="dlg"><p>Üye bulunamadı.</p></div>`;
+  const bs = Object.values(S.bookings).filter(b => b.userId === uid && b.status !== "moved").sort((a, b) => a.slotStart.localeCompare(b.slotStart));
+  const now = Date.now();
+  const up = bs.filter(b => b.status === "booked" && S.slots[b.slotId] && slotStart(S.slots[b.slotId]) > now && !slotVoid(S.slots[b.slotId]));
+  const past = bs.filter(b => !up.includes(b)).reverse().slice(0, 30);
+  return `<div class="dlg">
+    <div class="dlg-h"><div><h2>${esc(u.name)}</h2><p class="small">${esc([u.phone, u.email].filter(Boolean).join(" · "))}</p></div><button class="x" data-act="close" aria-label="Kapat">×</button></div>
+    <form class="fgrid" data-form="user-edit" data-id="${uid}">
+      <label class="f">Ad soyad<input type="text" name="name" value="${esc(u.name)}" required></label>
+      <label class="f">Telefon<input type="tel" name="phone" value="${esc(u.phone || "")}"></label>
+      <div class="row" style="align-items:end"><button class="btn sm" type="submit">Bilgileri kaydet</button></div>
+    </form>
+    <hr>
+    <h3>Paket tanımla</h3>
+    <form class="fgrid" data-form="pkg-add" data-id="${uid}">
+      <label class="f">Paket<select name="size"><option value="8">8 ders · 1 ay</option><option value="16">16 ders · 2 ay</option><option value="24">24 ders · 3 ay</option></select></label>
+      <label class="f">Başlangıç<input type="date" name="start" value="${today()}" required></label>
+      <div class="row" style="align-items:end"><button class="btn primary" type="submit">Paketi ekle</button></div>
+    </form>
+    <div class="list">${userPackages(uid).map(p => pkgCard(p, { admin: true })).join("") || `<p class="small">Paket yok.</p>`}</div>
+    <hr>
+    <h3>Yaklaşan dersler</h3>
+    <div class="list">${up.map(b => bookingRow(b, { admin: true })).join("") || `<p class="small">Planlı ders yok.</p>`}</div>
+    <h3>Geçmiş</h3>
+    <div class="list">${past.map(b => bookingRow(b, { admin: true })).join("") || `<p class="small">Kayıt yok.</p>`}</div>
+  </div>`;
+}
+
+/* ----- ders programı (yönetici) ----- */
+function programView() {
+  const nextMon = ymd(addDays(weekStart(new Date()), 7));
+  const days = fv("days", [0, 1, 2, 3, 4]);
+  return `<div class="stack">
+    <div class="card stack">
+      <h2>Haftalık program oluştur</h2>
+      <p class="small">Seçtiğin günlere ve saatlere, belirlediğin hafta sayısı kadar ders ekler. Aynı saatte zaten ders varsa tekrar eklemez.</p>
+      <form class="stack" data-form="gen">
+        <div><div class="small" style="font-weight:600;margin-bottom:6px">Günler</div>
+          <div class="checks">${WD.map((w, i) => `<label><input type="checkbox" name="d" value="${i}" ${days.includes(i) ? "checked" : ""}> ${w}</label>`).join("")}</div></div>
+        <label class="f">Saatler (virgülle ayır)<input type="text" name="times" data-k="times" value="${esc(fv("times", "09:00, 10:00, 18:00, 19:00"))}"></label>
+        <div class="fgrid">
+          <label class="f">Başlangıç tarihi<input type="date" name="from" data-k="from" value="${fv("from", nextMon)}" required></label>
+          <label class="f">Kaç hafta<input type="number" name="weeks" data-k="weeks" min="1" max="26" value="${fv("weeks", 4)}" required></label>
+          <label class="f">Kontenjan<input type="number" name="cap" data-k="cap" min="1" max="30" value="${fv("cap", set().capacity)}" required></label>
+          <label class="f">Süre (dk)<input type="number" name="dur" data-k="dur" min="15" max="180" value="${fv("dur", set().duration)}" required></label>
+        </div>
+        <button class="btn primary" type="submit">Dersleri oluştur</button>
+      </form>
+    </div>
+    <div class="card stack">
+      <h2>Tek ders ekle</h2>
+      <form class="fgrid" data-form="one">
+        <label class="f">Tarih<input type="date" name="date" value="${today()}" required></label>
+        <label class="f">Saat<input type="time" name="time" value="18:00" required></label>
+        <label class="f">Kontenjan<input type="number" name="cap" min="1" max="30" value="${set().capacity}" required></label>
+        <div class="row" style="align-items:end"><button class="btn primary" type="submit">Ekle</button></div>
+      </form>
+    </div>
+  </div>`;
+}
+
+/* ----- ayarlar (yönetici) ----- */
+function settingsView() {
+  const c = set();
+  return `<div class="stack"><div class="card stack">
+    <h2>Kurallar ve ayarlar</h2>
+    <form class="stack" data-form="settings">
+      <div class="fgrid">
+        <label class="f">Stüdyo adı<input type="text" name="studioName" value="${esc(c.studioName)}"></label>
+        <label class="f">Varsayılan kontenjan<input type="number" name="capacity" min="1" max="30" value="${c.capacity}"></label>
+        <label class="f">Ders süresi (dk)<input type="number" name="duration" min="15" max="180" value="${c.duration}"></label>
+        <label class="f">İptal/değişiklik son süre (saat önce)<input type="number" name="changeHours" min="0" max="168" value="${c.changeHours}"></label>
+        <label class="f">Dersin yapılması için en az kişi<input type="number" name="minAttendees" min="1" max="30" value="${c.minAttendees}"></label>
+        <label class="f">Kişi sayısı kontrolü (dersten kaç saat önce)<input type="number" name="autoCancelHours" min="0" max="72" value="${c.autoCancelHours}"></label>
+      </div>
+      <button class="btn primary" type="submit">Kaydet</button>
+    </form>
+    <p class="small">Örnek: “en az 2 kişi” ve “12 saat önce” seçiliyse, dersten 12 saat önce derste 1 kişi varsa ders otomatik iptal olur ve hakkı iade edilir. Bir dersi az kişiyle de yapmak istersen ders penceresinden “Az kişiyle de yap” seçeneğini işaretle.</p>
+    <p class="small">Paket süreleri: 8 ders → 1 ay, 16 ders → 2 ay, 24 ders → 3 ay. Gerekirse üyenin paket bitiş tarihini Üyeler bölümünden uzatabilirsin.</p>
+  </div>
+  ${DEMO ? `<div class="card stack"><h2>Demo</h2><p class="small">Demo verilerini baştan oluşturur.</p><button class="btn danger" data-act="demo-reset">Demo verisini sıfırla</button></div>` : ""}
+  </div>`;
+}
+
+/* ----- pencere yönetimi ----- */
+let lastDlg = "";
+function renderDlg() {
+  const d = $("#dlg");
+  if (!UI.dlg) { closeDlg(true); return; }
+  const html = UI.dlg.type === "slot" ? slotDialog(UI.dlg.id) : memberDialog(UI.dlg.id);
+  const active = document.activeElement;
+  const typing = active && d.contains(active) && /INPUT|SELECT|TEXTAREA/.test(active.tagName) && active.type !== "checkbox";
+  if (html !== lastDlg && !typing) { const sc = d.scrollTop; d.innerHTML = html; d.scrollTop = sc; lastDlg = html; }
+  if (!d.open) d.showModal();
+}
+function openDlg(type, id) { UI.dlg = { type, id }; lastDlg = ""; renderDlg(); }
+function closeDlg(silent) { UI.dlg = null; lastDlg = ""; const d = $("#dlg"); if (d.open) d.close(); if (!silent) schedule(); }
+$("#dlg").addEventListener("close", () => { if (UI.dlg) { UI.dlg = null; lastDlg = ""; schedule(); } });
+$("#dlg").addEventListener("click", e => { if (e.target === e.currentTarget) closeDlg(); });
+
+/* ---------- olaylar ---------- */
+async function run(fn, okMsg) {
+  try { const r = await fn(); if (okMsg) toast(typeof okMsg === "function" ? okMsg(r) : okMsg); schedule(); return r; }
+  catch (e) { console.error(e); toast(errText(e), true); }
+}
+document.addEventListener("click", async e => {
+  const el = e.target.closest("[data-act]"); if (!el || el.tagName === "SELECT" || el.type === "checkbox") return;
+  const a = el.dataset.act, id = el.dataset.id, v = el.dataset.v;
+  switch (a) {
+    case "tab": UI.tab = v; schedule(); break;
+    case "view": UI.view = v; schedule(); break;
+    case "nav": {
+      const c = parseYmd(UI.cursor);
+      UI.cursor = v === "0" ? today() : UI.view === "week" ? ymd(addDays(c, 7 * Number(v))) : ymd(new Date(c.getFullYear(), c.getMonth() + Number(v), 1));
+      schedule(); break;
+    }
+    case "goto-week": UI.cursor = v; UI.view = "week"; schedule(); break;
+    case "slot": openDlg("slot", id); break;
+    case "member": openDlg("member", id); break;
+    case "close": closeDlg(); break;
+    case "logout": closeDlg(true); await run(() => B.signOut()); break;
+    case "demo-login": await B.demoLogin(id); break;
+    case "demo-reset": if (confirm("Demo verileri sıfırlansın mı?")) await run(() => B.reset(), "Demo verisi yenilendi."); break;
+    case "auth-mode": UI.authMode = v; schedule(); break;
+    case "pw-reset": {
+      const em = $('input[name="email"]')?.value.trim();
+      if (!em) { toast("Önce e-posta adresini yaz.", true); break; }
+      await run(() => B.reset(em), "Şifre sıfırlama bağlantısı e-postana gönderildi."); break;
+    }
+    case "book": await run(() => ops.book(id), "Derse kaydoldun."); break;
+    case "cancel-booking": {
+      const b = S.bookings[id], late = isLate(S.slots[b.slotId]);
+      const msg = late ? `Derse ${set().changeHours} saatten az kaldı. İptal edersen bu ders hakkın YANAR. Yine de iptal edilsin mi?` : "Ders iptal edilsin mi? Hakkın iade edilecek.";
+      if (!confirm(msg)) break;
+      await run(() => ops.cancel(id), l => l ? "Ders iptal edildi, hakkın yandı." : "Ders iptal edildi, hakkın iade edildi.");
+      break;
+    }
+    case "move-start": UI.move = { bookingId: id, admin: el.dataset.admin === "1" }; UI.tab = "calendar"; UI.view = "week"; UI.cursor = S.bookings[id].slotStart.slice(0, 10); closeDlg(); toast("Takvimden yeni saati seç."); break;
+    case "move-cancel": UI.move = null; schedule(); break;
+    case "move-here": {
+      const m = UI.move; if (!m) break;
+      const ok = await run(async () => { await ops.move(m.bookingId, id, { admin: m.admin }); return true; }, "Ders yeni saate taşındı.");
+      if (ok) { UI.move = null; closeDlg(); }
+      break;
+    }
+    case "admin-remove": if (confirm("Üye bu dersten çıkarılsın mı? Ders hakkı iade edilir.")) await run(() => ops.cancel(id, { admin: true }), "Üye dersten çıkarıldı, hakkı iade edildi."); break;
+    case "delete-slot": if (confirm("Ders takvimden silinsin mi?")) { await run(() => ops.deleteSlot(id), "Ders silindi."); closeDlg(); } break;
+    case "pkg-delete": if (confirm("Paket silinsin mi? Bu pakete bağlı derslerin hakkı hesaplanamaz hale gelir.")) await run(() => ops.deletePackage(id), "Paket silindi."); break;
+  }
+});
+document.addEventListener("change", async e => {
+  const el = e.target;
+  if (el.dataset.act === "keep-open") await run(() => ops.setKeepOpen(el.dataset.id, el.checked), el.checked ? "Ders az kişiyle de yapılacak." : "Otomatik iptal açık.");
+  if (el.dataset.act === "jump-month") { const c = parseYmd(UI.cursor); UI.cursor = ymd(new Date(c.getFullYear(), Number(el.value), 1)); schedule(); el.blur(); }
+  if (el.dataset.act === "jump-year") { const c = parseYmd(UI.cursor); UI.cursor = ymd(new Date(Number(el.value), c.getMonth(), 1)); schedule(); el.blur(); }
+  if (el.name === "d" && el.closest('[data-form="gen"]')) UI.f.days = [...el.form.querySelectorAll('input[name="d"]:checked')].map(x => Number(x.value));
+});
+document.addEventListener("input", e => {
+  const k = e.target.dataset.k; if (!k) return;
+  if (k === "memberQuery") {
+    UI.memberQuery = e.target.value;
+    const pos = e.target.selectionStart; e.target.blur(); render();
+    const n = $('[data-k="memberQuery"]'); if (n) { n.focus(); n.setSelectionRange(pos, pos); }
+  } else UI.f[k] = e.target.value;
+});
+document.addEventListener("submit", async e => {
+  const f = e.target.closest("form[data-form]"); if (!f) return;
+  e.preventDefault();
+  const fd = new FormData(f), id = f.dataset.id, g = k => String(fd.get(k) || "").trim();
+  document.activeElement?.blur();
+  switch (f.dataset.form) {
+    case "signin": await run(() => B.signIn(g("email"), String(fd.get("pw")))); break;
+    case "signup": await run(() => B.signUp(g("name"), g("phone"), g("email"), String(fd.get("pw")))); break;
+    case "admin-add": await run(() => ops.book(id, g("uid")), "Üye derse eklendi."); break;
+    case "cancel-slot":
+      if (confirm("Ders iptal edilsin mi? Kayıtlı üyelerin hakları iade edilir.")) await run(() => ops.cancelSlot(id, g("reason")), "Ders iptal edildi.");
+      break;
+    case "pkg-add": await run(() => ops.addPackage(id, g("size"), g("start")), "Paket tanımlandı."); break;
+    case "pkg-edit": await run(() => ops.updatePackage(id, { expiresAt: g("expiresAt") }), "Bitiş tarihi güncellendi."); break;
+    case "user-edit": await run(() => ops.updateUser(id, { name: g("name"), phone: g("phone") }), "Bilgiler kaydedildi."); break;
+    case "add-member": await run(async () => { await B.addMember(g("name"), g("phone")); f.reset(); }, "Üye eklendi."); break;
+    case "settings": {
+      const n = k => Math.max(0, Number(fd.get(k)) || 0);
+      await run(() => ops.saveSettings({ studioName: g("studioName") || DEFAULTS.studioName, capacity: n("capacity") || 5, duration: n("duration") || 50,
+        changeHours: n("changeHours"), minAttendees: n("minAttendees") || 1, autoCancelHours: n("autoCancelHours") }), "Ayarlar kaydedildi.");
+      break;
+    }
+    case "gen": {
+      const days = fd.getAll("d").map(Number);
+      const times = g("times").split(/[,\s]+/).filter(Boolean).map(t => { const m = t.match(/^(\d{1,2})[:.](\d{2})$/); return m ? `${pad(Number(m[1]))}:${m[2]}` : null; });
+      if (!days.length) { toast("En az bir gün seç.", true); break; }
+      if (!times.length || times.includes(null)) { toast("Saatleri 09:00, 18:30 gibi yaz.", true); break; }
+      const from = parseYmd(g("from")), weeks = Number(g("weeks")), cap = Number(g("cap")), dur = Number(g("dur"));
+      const list = [];
+      for (let i = 0; i < weeks * 7; i++) {
+        const d = addDays(from, i), wd = (d.getDay() + 6) % 7;
+        if (days.includes(wd)) times.forEach(t => list.push({ start: `${ymd(d)}T${t}`, capacity: cap, duration: dur }));
+      }
+      await run(() => ops.createSlots(list), r => `${r.added} ders eklendi${r.skipped ? ` (${r.skipped} tanesi zaten vardı)` : ""}.`);
+      break;
+    }
+    case "one": await run(() => ops.createSlots([{ start: `${g("date")}T${g("time")}`, capacity: Number(g("cap")), duration: set().duration }]), r => r.added ? "Ders eklendi." : "Bu saatte zaten ders var."); break;
+  }
+});
+// Zamana bağlı durumlar (otomatik iptal, geç iptal) için dakikada bir yenile
+setInterval(schedule, 60000);
+
+B.init().catch(e => { console.error(e); $("#app").innerHTML = `<div class="card"><h2>Bağlantı kurulamadı</h2><p class="small">${esc(errText(e))}</p></div>`; });
+</script>
+</body>
+</html>
